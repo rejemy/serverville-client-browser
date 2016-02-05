@@ -1,0 +1,10 @@
+{
+	"compilerOptions": {
+		"target": "es5",
+		"out": "serverville.js",
+		"sourceMap": true
+	},
+	"files": [
+		"src/serverville.ts"
+	]
+}
