@@ -1,227 +1,78 @@
+/// <reference path="serverville_messages.ts" />
+/// <reference path="serverville_http.ts" />
+/// <reference path="serverville_ws.ts" />
+
+// Generated, unfortunately. Edit original template in browser/templates/serverville.ts.tmpl
+
 namespace sv
 {
-	type ServervilleReplyHandler = (isError:boolean, msg:Object)=>void;
-	type ServervilleMessageHandler = (from:string, msg:Object)=>void;
     
-	export interface SetUserDataInfo
-	{
-		key:string,
-		value:any,
-		data_type?:string
-	}
-	
-	export interface DataItemInfo
-	{
-		id:string;
-		key:string;
-		value:any;
-		data_type:string;
-		created:number;
-		modified:number;
-		deleted?:boolean;
-	}
-	
-	export interface DataItemsReply
-	{
-		values:{[key:string]:DataItemInfo};
-	}
-	
-	export interface SignInReply
-	{
-		username:string;
-		email:string;
-		user_id:string;
-		session_id:string;
-	}
-	
-	export interface SetDataReply
-	{
-		updated_at:number;
-	}
-	
-	export interface KeyRequestOptions
-	{
-		since?:number;
-		include_deleted?:boolean;
-	}
-	
-	interface MessageEnvelope
-	{
-		message:Object;
-	}
-    
-    export interface ErrorReply
-    {
-        errorCode:number;
-        errorMessage:string;
-        errorDetails:string;
-    }
-	
 	export class Serverville
 	{
 		ServerURL:string;
 
 		SessionId:string;
+        
 		UserInfo:SignInReply;
 		
-		GlobalErrorHandler:(ev:Event)=>void;
-		
-		ServerSocket:WebSocket;
-		MessageSequence:number = 0;
-		ReplyCallbacks:{[id:number]:ServervilleReplyHandler} = {};
-		
-        ServerMessageHandler:any;
+		GlobalErrorHandler:(ev:ErrorReply)=>void;
         
         LogMessagesToConsole:boolean = false;
+        
+        Transport:ServervilleTransport;
         
 		constructor(url:string)
 		{
 			this.ServerURL = url;
 			this.SessionId = localStorage.getItem("SessionId");
- 
-		}
-		
-		init(onComplete:(user:SignInReply)=>void):void
-		{
-			var self:Serverville = this;
-			
-			if(this.usingWebsocket())
-			{
-				this.ServerSocket = new WebSocket(this.ServerURL);
-				
-				this.ServerSocket.onopen = function(evt:Event):void
-				{
-					if(self.SessionId)
-					{
-						self.validateSession(self.SessionId, onComplete, function(reply:Object):void
-						{
-							self.signOut();
-							onComplete(null);
-						});
-					}
-					else
-					{
-						onComplete(null);
-					}
-				};
-				this.ServerSocket.onclose = function(evt:CloseEvent):void
-				{
-					self.onWSClosed(evt);
-				};
-				this.ServerSocket.onmessage = function(evt:MessageEvent):void
-				{
-					self.onWSMessage(evt);
-				};
-				this.ServerSocket.onerror = function(evt:ErrorEvent):void
-				{
-					onComplete(null);
-				};
-		
-				return;
-			}
-
-			if(this.SessionId)
-			{
-				this.getUserInfo(onComplete, function(reply:Object):void
-				{
-					self.signOut();
-					onComplete(null);
-				});
-			}
-			else
-			{
-				onComplete(null);
-			}
-		}
-		
-		private onWSClosed(evt:CloseEvent):void
-		{
-			console.log("Web socket closed");
-		}
-		
-		private onWSMessage(evt:MessageEvent):void
-		{
-			var messageStr:string = evt.data;
             
-            if(this.LogMessagesToConsole)
-                console.log("WS-> "+messageStr);
-            
-            var split1:number = messageStr.indexOf(":");
-            if(split1 < 0)
+            if(this.ServerURL.substr(0, 5) == "ws://" || this.ServerURL.substr(0, 6) == "wss://")
             {
-                console.log("Incorrectly formatted message");
-                return;
+                this.Transport = new WebSocketTransport(this);
             }
-            
-            var messageType:string = messageStr.substring(0, split1);
-            if(messageType == "M")
+            else if(this.ServerURL.substr(0, 7) == "http://" || this.ServerURL.substr(0, 8) == "https://")
             {
-                // Server push message
-                var split2:number = messageStr.indexOf(":", split1+1);
-                if(split2 < 0)
-                {
-                    console.log("Incorrectly formatted message");
-                    return;
-                }
-                var split3:number = messageStr.indexOf(":", split2+1);
-                if(split3 < 0)
-                {
-                    console.log("Incorrectly formatted message");
-                    return;
-                }
-                
-                var messageId:string = messageStr.substring(split1+1, split2);
-                var messageFrom:string = messageStr.substring(split2+1, split3);
-                var messageJson:string = messageStr.substring(split3+1);
-                var messageData:Object = JSON.parse(messageJson);
-                
-                if(this.ServerMessageHandler != null)
-                {
-                    var handler:ServervilleMessageHandler = this.ServerMessageHandler[messageId];
-                    if(handler == null)
-                    {
-                        console.log("No handler for message of type "+messageId);
-                        return;
-                    }
-                    
-                    handler(messageFrom, messageData);
-                }
-            }
-            else if(messageType == "E" || messageType == "R")
-            {
-                // Reply
-                var split2:number = messageStr.indexOf(":", split1+1);
-                if(split2 < 0)
-                {
-                    console.log("Incorrectly formatted message");
-                    return;
-                }
-                
-                var messageNum:number = parseInt(messageStr.substring(split1+1, split2));
-                
-                var messageJson:string = messageStr.substring(split2+1);
-                var messageData:Object = JSON.parse(messageJson);
-                
-                var isError:boolean = false;
-                if(messageType == "E")
-                    isError = true;
-                    
-                var callback:ServervilleReplyHandler = this.ReplyCallbacks[messageNum];
-                delete this.ReplyCallbacks[messageNum];
-                callback(isError, messageData);
+                this.Transport = new HttpTransport(this);
             }
             else
             {
-                console.log("Unknown server message: "+messageStr);
+                throw "Unknown server protocol: "+url;
             }
- 
 		}
 		
-		private usingWebsocket():boolean
+		init(onComplete:(user:SignInReply, err:ErrorReply)=>void):void
 		{
-			return this.ServerURL.substr(0, 5) == "ws://";
+			var self:Serverville = this;
+			
+            this.Transport.init(function(err:ErrorReply):void
+            {
+                if(err != null)
+                {
+                    onComplete(null, err);
+                    return;
+                }
+                
+                if(self.SessionId)
+                {
+                    self.validateSession(self.SessionId,
+                    function(reply:SignInReply):void
+                    {
+                        onComplete(reply, null);
+                    },
+                    function(err:ErrorReply):void
+                    {
+                        self.signOut();
+                        onComplete(null, err);
+                    });
+                }
+                else
+                {
+                    onComplete(null, null);
+                }
+            });
+            
 		}
-		
+	
 		private setUserInfo(userInfo:SignInReply):void
 		{
 			if(userInfo == null)
@@ -255,478 +106,504 @@ namespace sv
 			return data;
 		}
 		
-		private callJsonApi(api:string, request:Object, onSuccess:(reply:Object)=>void, onError:(reply:Object)=>void):void
-		{
-			if(this.ServerSocket)
-			{
-				this.callWSJsonApi(api, request, onSuccess, onError);
-			}
-			else
-			{
-				this.callHTTPJsonApi(api, request, onSuccess, onError);
-			}
-		}
-		
-		private callHTTPJsonApi(api:string, request:Object, onSuccess:(reply:Object)=>void, onError:(reply:Object)=>void):void
-		{
-			var req:XMLHttpRequest = new XMLHttpRequest();
-			req.open("POST", this.ServerURL+"/api/"+api);
-			if(this.SessionId)
-				req.setRequestHeader("Authorization", this.SessionId);
-			req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-			var body:string = JSON.stringify(request);
-			
-            if(this.LogMessagesToConsole)
-                console.log("HTTP<- "+body);
-            
-			var self:Serverville = this;
-			
-			req.onload = function(ev:Event):void
-			{
-                if(this.LogMessagesToConsole)
-                    console.log("HTTP-> "+req.response);
-                
-				if (req.status >= 200 && req.status < 400)
-				{
-					var envelope:MessageEnvelope = JSON.parse(req.response);
-					if(onSuccess)
-					{
-						onSuccess(envelope.message);
-					}
-				}
-				else
-				{
-					if(self.GlobalErrorHandler)
-						self.GlobalErrorHandler(null);
-					if(onError)
-						onError(null);
-				}
-				
-			};
-			
-			req.onerror = function(ev:Event):void
-			{
-				if(self.GlobalErrorHandler)
-					self.GlobalErrorHandler(ev);
-				if(onError)
-					onError(ev);
-			};
-			
-			req.send(body);
-		}
-		
-		private callWSJsonApi(api:string, request:Object, onSuccess:(reply:Object)=>void, onError:(reply:Object)=>void):void
-		{
-            var messageNum:number = this.MessageSequence++;
-			var message:string = api+":"+messageNum.toString()+":"+JSON.stringify(request);
-            
-            if(this.LogMessagesToConsole)
-                console.log("WS<- "+message);
-            
-            var callback:ServervilleReplyHandler = function(isError:boolean, reply:Object):void
-            {
-                if(isError)
-                {
-                    if(onError)
-                        onError(reply);
-                }
-                else
-                {
-                    if(onSuccess)
-                        onSuccess(reply);
-                }
-            };
-            
-            this.ReplyCallbacks[messageNum] = callback;
-            
-			this.ServerSocket.send(message);
-		}
-		
 		isSignedIn():boolean
 		{
 			return this.SessionId != null;
 		}
 		
-		validateSession(session_id:string, onSuccess:(reply:SignInReply)=>void, onError?:(reply:Object)=>void):void
-		{
-			var self:Serverville = this;
-			this.callJsonApi("ValidateSession",
-				{
-					"session_id":session_id
-				},
-				function(reply:SignInReply):void
-				{
-					self.setUserInfo(reply);
-					
-					if(onSuccess)
-						onSuccess(reply);
-				},
-				onError
-			);
-		}
-		
-		signIn(username:string, email:string, password:string, onSuccess:(reply:SignInReply)=>void, onError?:(reply:Object)=>void):void
-		{
-			var self:Serverville = this;
-			this.callJsonApi("SignIn",
-				{
-					"username":username,
-					"email":email,
-					"password":password
-				},
-				function(reply:SignInReply):void
-				{
-					self.setUserInfo(reply);
-					
-					if(onSuccess)
-						onSuccess(reply);
-				},
-				onError
-			);
-		}
-		
-		signOut():void
+        signOut():void
 		{
 			this.setUserInfo(null);
 		}
-		
-		createAccount(username:string, email:string, password:string, onSuccess:(reply:SignInReply)=>void, onError?:(reply:Object)=>void):void
+        
+        		signInReq(request:SignIn, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-			var self:Serverville = this;
-			this.callJsonApi("CreateAccount",
-				{
-					"username":username,
-					"email":email,
-					"password":password
-				},
-				function(reply:SignInReply):void
-				{
-					self.setUserInfo(reply);
-					
-					if(onSuccess)
-						onSuccess(reply);
-				},
-				onError
-			);
-		}
-		
-		createAnonymousAccount(onSuccess:(reply:SignInReply)=>void, onError?:(reply:Object)=>void):void
-		{
-			var self:Serverville = this;
-			this.callJsonApi("CreateAnonymousAccount",
-				{
-				},
-				function(reply:SignInReply):void
-				{
-					self.setUserInfo(reply);
-					
-					if(onSuccess)
-						onSuccess(reply);
-				},
-				onError
-			);
-		}
-		
-		convertToFullAccount(username:string, email:string, password:string, onSuccess:(reply:SignInReply)=>void, onError?:(reply:Object)=>void):void
-		{
-			var self:Serverville = this;
-			this.callJsonApi("ConvertToFullAccount",
-				{
-					"username":username,
-					"email":email,
-					"password":password
-				},
-				function(reply:SignInReply):void
-				{
-					self.setUserInfo(reply);
-					
-					if(onSuccess)
-						onSuccess(reply);
-				},
-				onError
-			);
-		}
-		
-		getUserInfo(onSuccess:(reply:SignInReply)=>void, onError?:(reply:Object)=>void):void
-		{
-			var self:Serverville = this;
-			this.callJsonApi("GetUserInfo",
-				{},
-				function(reply:SignInReply):void
-				{
-					self.setUserInfo(reply);
-					
-					if(onSuccess)
-						onSuccess(reply);
-				},
-				onError
-			);
-		}
-		
-		setUserKey(request:SetUserDataInfo, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:Object)=>void):void
-		{
-			var self:Serverville = this;
-			this.callJsonApi("SetUserKey",
+			this.Transport.callApi("SignIn",
 				request,
-				onSuccess, onError
+				onSuccess,
+				onError
 			);
 		}
-		
-		setUserKeys(values:SetUserDataInfo[], onSuccess:(reply:SetDataReply)=>void, onError?:(reply:Object)=>void):void
+
+		signIn(username:string, email:string, password:string, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-			var self:Serverville = this;
-			this.callJsonApi("SetUserKeys",
+			this.signInReq(
+				{
+					"username":username,
+					"email":email,
+					"password":password
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		validateSessionReq(request:ValidateSessionRequest, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("ValidateSession",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		validateSession(session_id:string, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.validateSessionReq(
+				{
+					"session_id":session_id
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		createAnonymousAccountReq(request:CreateAnonymousAccount, onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("CreateAnonymousAccount",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		createAnonymousAccount(onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.createAnonymousAccountReq(
+				{
+
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		createAccountReq(request:CreateAccount, onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("CreateAccount",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		createAccount(username:string, email:string, password:string, onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.createAccountReq(
+				{
+					"username":username,
+					"email":email,
+					"password":password
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		convertToFullAccountReq(request:CreateAccount, onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("ConvertToFullAccount",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		convertToFullAccount(username:string, email:string, password:string, onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.convertToFullAccountReq(
+				{
+					"username":username,
+					"email":email,
+					"password":password
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		getUserInfoReq(request:GetUserInfo, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("GetUserInfo",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getUserInfo(onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getUserInfoReq(
+				{
+
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		setUserKeyReq(request:SetUserDataRequest, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("SetUserKey",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		setUserKey(key:string, value:any, data_type:string, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.setUserKeyReq(
+				{
+					"key":key,
+					"value":value,
+					"data_type":data_type
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		setUserKeysReq(request:UserDataRequestList, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("SetUserKeys",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		setUserKeys(values:Array<SetUserDataRequest>, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.setUserKeysReq(
 				{
 					"values":values
 				},
-				onSuccess, onError
+				onSuccess,
+				onError
 			);
 		}
-		
-		getUserKey(key:string, onSuccess:(reply:DataItemInfo)=>void, onError?:(reply:Object)=>void):void
+
+		getUserKeyReq(request:KeyRequest, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-			var self:Serverville = this;
-			this.callJsonApi("GetUserKey",
+			this.Transport.callApi("GetUserKey",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getUserKey(key:string, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getUserKeyReq(
 				{
 					"key":key
 				},
-				onSuccess, onError
+				onSuccess,
+				onError
 			);
 		}
-		
-		getUserKeys(keys:string[], since:number, onSuccess:(reply:DataItemsReply)=>void, onError?:(reply:Object)=>void):void
+
+		getUserKeysReq(request:KeysRequest, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-			var self:Serverville = this;
-			this.callJsonApi("GetUserKeys",
+			this.Transport.callApi("GetUserKeys",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getUserKeys(keys:Array<string>, since:number, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getUserKeysReq(
 				{
 					"keys":keys,
 					"since":since
 				},
-				onSuccess, onError
+				onSuccess,
+				onError
 			);
 		}
-		
-		getAllUserKeys(since:number, onSuccess:(reply:DataItemsReply)=>void, onError?:(reply:Object)=>void):void
+
+		getAllUserKeysReq(request:AllKeysRequest, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-			var self:Serverville = this;
-			this.callJsonApi("GetAllUserKeys",
+			this.Transport.callApi("GetAllUserKeys",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getAllUserKeys(since:number, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getAllUserKeysReq(
 				{
 					"since":since
 				},
-				onSuccess, onError
+				onSuccess,
+				onError
 			);
 		}
-		
-		getDataKey(id:string, key:string, onSuccess:(reply:DataItemInfo)=>void, onError?:(reply:Object)=>void):void
+
+		getDataKeyReq(request:GlobalKeyRequest, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-			var self:Serverville = this;
-			this.callJsonApi("GetDataKey",
+			this.Transport.callApi("GetDataKey",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getDataKey(id:string, key:string, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getDataKeyReq(
 				{
 					"id":id,
 					"key":key
 				},
-				onSuccess, onError
+				onSuccess,
+				onError
 			);
 		}
-		
-		getDataKeys(id:string, keys:string[], options:KeyRequestOptions, onSuccess:(reply:DataItemsReply)=>void, onError?:(reply:Object)=>void):void
+
+		getDataKeysReq(request:GlobalKeysRequest, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-			if(options == null) options = {};
-			var self:Serverville = this;
-			this.callJsonApi("GetDataKeys",
+			this.Transport.callApi("GetDataKeys",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getDataKeys(id:string, keys:Array<string>, since:number, include_deleted:boolean, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getDataKeysReq(
 				{
 					"id":id,
 					"keys":keys,
-					"since":options.since,
-					"include_deleted":options.include_deleted
+					"since":since,
+					"include_deleted":include_deleted
 				},
-				onSuccess, onError
+				onSuccess,
+				onError
 			);
 		}
-		
-		getAllDataKeys(id:string, options:KeyRequestOptions, onSuccess:(reply:DataItemsReply)=>void, onError?:(reply:Object)=>void):void
+
+		getAllDataKeysReq(request:AllGlobalKeysRequest, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-			if(options == null) options = {};
-			var self:Serverville = this;
-			this.callJsonApi("GetAllDataKeys",
+			this.Transport.callApi("GetAllDataKeys",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getAllDataKeys(id:string, since:number, include_deleted:boolean, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getAllDataKeysReq(
 				{
 					"id":id,
-					"since":options.since,
-					"include_deleted":options.include_deleted
+					"since":since,
+					"include_deleted":include_deleted
 				},
-				onSuccess, onError
+				onSuccess,
+				onError
 			);
 		}
-        
-        customApi(apiName:string, message:Object, onSuccess:(reply:Object)=>void, onError?:(reply:Object)=>void):void
-        {
-            this.callJsonApi(apiName,
-				message,
-				onSuccess, onError
-			);
-        }
-        
-	}
-	
 
-		
-	export class KeyData
-	{
-		id:string;
-		server:Serverville;
-		data:any;
-		data_info:{[key:string]:DataItemInfo};
-		local_dirty:{[key:string]:DataItemInfo};
-		most_recent:number;
-		
-		constructor(server:Serverville, id:string)
+		setTransientValueReq(request:SetTransientValueRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-			if(server == null)
-				throw "Must supply a serverville server";
-			if(id == null)
-				throw "Data must have an id";
-			this.id = id;
-			this.server = server;
-			this.data = {};
-			this.data_info = {};
-			this.local_dirty = {};
-			
-			this.most_recent = 0;
-		}
-		
-		loadAll(onDone?:()=>void):void
-		{
-			this.data = {};
-			this.local_dirty = {};
-			
-			var self:KeyData = this;
-			this.server.getAllDataKeys(this.id, {"include_deleted":true},
-				function(reply:DataItemsReply):void
-				{
-					self.data_info = reply.values;
-					
-					for(var key in self.data_info)
-					{
-						var dataInfo:DataItemInfo = self.data_info[key];
-						self.data[key] = dataInfo.value;
-						if(dataInfo.modified > self.most_recent)
-							self.most_recent = dataInfo.modified;
-					}
-					
-					if(onDone)
-						onDone();
-				},
-				function(reply:Object):void
-				{
-					if(onDone)
-						onDone();
-				}
+			this.Transport.callApi("SetTransientValue",
+				request,
+				onSuccess,
+				onError
 			);
-			
 		}
-		
-		refresh(onDone?:()=>void):void
-		{
-			var self:KeyData = this;
-			this.server.getAllDataKeys(this.id, {"include_deleted":true, "since":this.most_recent},
-				function(reply:DataItemsReply):void
-				{
-					self.data_info = reply.values;
-					
-					for(var key in self.data_info)
-					{
-						var dataInfo:DataItemInfo = self.data_info[key];
-						if(dataInfo.deleted)
-						{
-							delete self.data[key];
-						}
-						else
-						{
-							self.data[key] = dataInfo.value;
-						}
-						
-						if(dataInfo.modified > self.most_recent)
-							self.most_recent = dataInfo.modified;
-					}
-					
-					if(onDone)
-						onDone();
-				},
-				function(reply:Object):void
-				{
-					if(onDone)
-						onDone();
-				}
-			);
 
-		}
-		
-		set(key:string, val:any, data_type:string = null):void
+		setTransientValue(key:string, value:any, data_type:string, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-			if(this.server.UserInfo == null || this.server.UserInfo.user_id != this.id)
-				throw "Read-only data!";
-				
-			this.data[key] = val;
-			var info:DataItemInfo = this.data_info[key];
-			if(info)
-			{
-				info.value = val;
-				if(data_type)
-					info.data_type = data_type;
-				if(info.deleted)
-					delete info.deleted;
-			}
-			else
-			{
-				info = {
-					"id":this.id,
+			this.setTransientValueReq(
+				{
 					"key":key,
-					"value":val,
-					"data_type":data_type,
-					"created":0,
-					"modified":0
-				};
-				this.data_info[key] = info;
-			}
-			this.local_dirty[key] = info;
-		}
-		
-		save(onDone?:()=>void):void
-		{
-			if(this.server.UserInfo == null || this.server.UserInfo.user_id != this.id)
-				throw "Read-only data!";
-				
-			var saveSet:SetUserDataInfo[] = [];
-			
-			for(var key in this.local_dirty)
-			{
-				var info:DataItemInfo = this.local_dirty[key];
-	
-				saveSet.push(
-					{
-						"key":info.key,
-						"value":info.value,
-						"data_type":info.data_type
-					}
-				);
-			}
-			
-			this.server.setUserKeys(saveSet,
-				function(reply:SetDataReply):void
-				{
-					this.local_dirty = {};
-					
-					if(onDone)
-						onDone();
+					"value":value,
+					"data_type":data_type
 				},
-				function(reply:Object):void
-				{
-					if(onDone)
-						onDone();
-				}
+				onSuccess,
+				onError
 			);
-
-			
 		}
+
+		setTransientValuesReq(request:SetTransientValuesRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("SetTransientValues",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		setTransientValues(values:Array<SetTransientValueRequest>, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.setTransientValuesReq(
+				{
+					"values":values
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		getTransientValueReq(request:GetTransientValueRequest, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("GetTransientValue",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getTransientValue(id:string, key:string, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getTransientValueReq(
+				{
+					"id":id,
+					"key":key
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		getTransientValuesReq(request:GetTransientValuesRequest, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("GetTransientValues",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getTransientValues(id:string, keys:Array<string>, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getTransientValuesReq(
+				{
+					"id":id,
+					"keys":keys
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		getAllTransientValuesReq(request:GetAllTransientValuesRequest, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("getAllTransientValues",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getAllTransientValues(id:string, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getAllTransientValuesReq(
+				{
+					"id":id
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		getChannelInfoReq(request:JoinChannelRequest, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("GetChannelInfo",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getChannelInfo(id:string, listen_only:boolean, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getChannelInfoReq(
+				{
+					"id":id,
+					"listen_only":listen_only
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		joinChannelReq(request:JoinChannelRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("JoinChannel",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		joinChannel(id:string, listen_only:boolean, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.joinChannelReq(
+				{
+					"id":id,
+					"listen_only":listen_only
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		leaveChannelReq(request:LeaveChannelRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("LeaveChannel",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		leaveChannel(id:string, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.leaveChannelReq(
+				{
+					"id":id
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		sendClientMessageReq(request:TransientMessageRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("SendClientMessage",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		sendClientMessage(to:string, message_type:string, value:any, data_type:string, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.sendClientMessageReq(
+				{
+					"to":to,
+					"message_type":message_type,
+					"value":value,
+					"data_type":data_type
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+
+        
+        
 	}
+
+		
 }

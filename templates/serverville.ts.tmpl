@@ -1,0 +1,125 @@
+/// <reference path="serverville_messages.ts" />
+/// <reference path="serverville_http.ts" />
+/// <reference path="serverville_ws.ts" />
+
+// Generated, unfortunately. Edit original template in browser/templates/serverville.ts.tmpl
+
+namespace sv
+{
+    
+	export class Serverville
+	{
+		ServerURL:string;
+
+		SessionId:string;
+        
+		UserInfo:SignInReply;
+		
+		GlobalErrorHandler:(ev:ErrorReply)=>void;
+        
+        LogMessagesToConsole:boolean = false;
+        
+        Transport:ServervilleTransport;
+        
+		constructor(url:string)
+		{
+			this.ServerURL = url;
+			this.SessionId = localStorage.getItem("SessionId");
+            
+            if(this.ServerURL.substr(0, 5) == "ws://" || this.ServerURL.substr(0, 6) == "wss://")
+            {
+                this.Transport = new WebSocketTransport(this);
+            }
+            else if(this.ServerURL.substr(0, 7) == "http://" || this.ServerURL.substr(0, 8) == "https://")
+            {
+                this.Transport = new HttpTransport(this);
+            }
+            else
+            {
+                throw "Unknown server protocol: "+url;
+            }
+		}
+		
+		init(onComplete:(user:SignInReply, err:ErrorReply)=>void):void
+		{
+			var self:Serverville = this;
+			
+            this.Transport.init(function(err:ErrorReply):void
+            {
+                if(err != null)
+                {
+                    onComplete(null, err);
+                    return;
+                }
+                
+                if(self.SessionId)
+                {
+                    self.validateSession(self.SessionId,
+                    function(reply:SignInReply):void
+                    {
+                        onComplete(reply, null);
+                    },
+                    function(err:ErrorReply):void
+                    {
+                        self.signOut();
+                        onComplete(null, err);
+                    });
+                }
+                else
+                {
+                    onComplete(null, null);
+                }
+            });
+            
+		}
+	
+		private setUserInfo(userInfo:SignInReply):void
+		{
+			if(userInfo == null)
+			{
+				this.UserInfo = null;
+				this.SessionId = null;
+				localStorage.removeItem("SessionId");
+			}
+			else
+			{
+				this.UserInfo = userInfo;
+				this.SessionId = userInfo.session_id;
+				localStorage.setItem("SessionId", this.SessionId);
+			}
+		}
+		
+		loadUserKeyData(onDone?:()=>void):KeyData
+		{
+			if(!this.UserInfo)
+				throw "No user loaded";
+				
+			var data:KeyData = new KeyData(this, this.UserInfo.user_id);
+			data.loadAll(onDone);
+			return data;
+		}
+		
+		loadKeyData(id:string, onDone?:()=>void):KeyData
+		{
+			var data:KeyData = new KeyData(this, id);
+			data.loadAll(onDone);
+			return data;
+		}
+		
+		isSignedIn():boolean
+		{
+			return this.SessionId != null;
+		}
+		
+        signOut():void
+		{
+			this.setUserInfo(null);
+		}
+        
+        {{APIs}}
+        
+        
+	}
+
+		
+}

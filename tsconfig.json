@@ -5,6 +5,7 @@
 		"sourceMap": true
 	},
 	"files": [
-		"src/serverville.ts"
+		"src/serverville.ts",
+        "src/serverville_keydata.ts"
 	]
 }

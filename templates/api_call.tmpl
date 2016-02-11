@@ -1,0 +1,20 @@
+		{{MethodName}}Req(request:{{ReqType}}, onSuccess:(reply:{{ReplyType}})=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi("{{ApiName}}",
+				request,
+				{{SuccessClosure}},
+				onError
+			);
+		}
+
+		{{MethodName}}({{Params}}onSuccess:(reply:{{ReplyType}})=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.{{MethodName}}Req(
+				{
+{{ReqInit}}
+				},
+				onSuccess,
+				onError
+			);
+		}
+
