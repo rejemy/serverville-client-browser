@@ -2,11 +2,6 @@
 
 namespace sv
 {
-    interface MessageEnvelope
-	{
-		message:Object;
-	}
-    
     export class HttpTransport implements ServervilleTransport
 	{
         SV:Serverville;
@@ -43,10 +38,10 @@ namespace sv
                 
 				if (req.status >= 200 && req.status < 400)
 				{
-					var envelope:MessageEnvelope = JSON.parse(req.response);
+					var message:Object = JSON.parse(req.response);
 					if(onSuccess)
 					{
-						onSuccess(envelope.message);
+						onSuccess(message);
 					}
 				}
 				else

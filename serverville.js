@@ -47,9 +47,9 @@ var sv;
                 if (this.LogMessagesToConsole)
                     console.log("HTTP-> " + req.response);
                 if (req.status >= 200 && req.status < 400) {
-                    var envelope = JSON.parse(req.response);
+                    var message = JSON.parse(req.response);
                     if (onSuccess) {
-                        onSuccess(envelope.message);
+                        onSuccess(message);
                     }
                 }
                 else {
@@ -240,7 +240,10 @@ var sv;
             this.setUserInfo(null);
         };
         Serverville.prototype.signInReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("SignIn", request, onSuccess, onError);
+            var self = this;
+            this.Transport.callApi("SignIn", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
+                onSuccess(reply);
+            } }, onError);
         };
         Serverville.prototype.signIn = function (username, email, password, onSuccess, onError) {
             this.signInReq({
@@ -250,7 +253,10 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.validateSessionReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("ValidateSession", request, onSuccess, onError);
+            var self = this;
+            this.Transport.callApi("ValidateSession", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
+                onSuccess(reply);
+            } }, onError);
         };
         Serverville.prototype.validateSession = function (session_id, onSuccess, onError) {
             this.validateSessionReq({
@@ -284,7 +290,10 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.getUserInfoReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("GetUserInfo", request, onSuccess, onError);
+            var self = this;
+            this.Transport.callApi("GetUserInfo", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
+                onSuccess(reply);
+            } }, onError);
         };
         Serverville.prototype.getUserInfo = function (onSuccess, onError) {
             this.getUserInfoReq({}, onSuccess, onError);
