@@ -49,22 +49,33 @@ namespace sv
 
 	export namespace JsonDataType
 	{
-		export var NULL = "null";
-		export var BOOLEAN = "boolean";
-		export var NUMBER = "number";
-		export var STRING = "string";
-		export var JSON = "json";
-		export var XML = "xml";
-		export var DATETIME = "datetime";
-		export var BYTES = "bytes";
-		export var OBJECT = "object";
+		export const NULL:JsonDataTypeEnum = "null";
+		export const BOOLEAN:JsonDataTypeEnum = "boolean";
+		export const NUMBER:JsonDataTypeEnum = "number";
+		export const STRING:JsonDataTypeEnum = "string";
+		export const JSON:JsonDataTypeEnum = "json";
+		export const XML:JsonDataTypeEnum = "xml";
+		export const DATETIME:JsonDataTypeEnum = "datetime";
+		export const BYTES:JsonDataTypeEnum = "bytes";
+		export const OBJECT:JsonDataTypeEnum = "object";
 	}
+
+	export type JsonDataTypeEnum =
+		"null" |
+		"boolean" |
+		"number" |
+		"string" |
+		"json" |
+		"xml" |
+		"datetime" |
+		"bytes" |
+		"object";
 
 	export interface SetUserDataRequest
 	{
 		key:string;
 		value:any;
-		data_type:string;
+		data_type:JsonDataTypeEnum;
 	}
 
 	export interface SetDataReply
@@ -87,7 +98,7 @@ namespace sv
 		id:string;
 		key:string;
 		value:any;
-		data_type:string;
+		data_type:JsonDataTypeEnum;
 		created:number;
 		modified:number;
 		deleted:boolean;
@@ -134,7 +145,7 @@ namespace sv
 	{
 		key:string;
 		value:any;
-		data_type:string;
+		data_type:JsonDataTypeEnum;
 	}
 
 	export interface EmptyClientReply
@@ -185,7 +196,7 @@ namespace sv
 		to:string;
 		message_type:string;
 		value:any;
-		data_type:string;
+		data_type:JsonDataTypeEnum;
 	}
 
 

@@ -44,7 +44,7 @@ var sv;
                 console.log("HTTP<- " + body);
             var self = this.SV;
             req.onload = function (ev) {
-                if (this.LogMessagesToConsole)
+                if (self.LogMessagesToConsole)
                     console.log("HTTP-> " + req.response);
                 if (req.status >= 200 && req.status < 400) {
                     var message = JSON.parse(req.response);
@@ -70,7 +70,7 @@ var sv;
             req.send(body);
         };
         return HttpTransport;
-    })();
+    }());
     sv_1.HttpTransport = HttpTransport;
 })(sv || (sv = {}));
 /// <reference path="serverville_types.ts" />
@@ -83,12 +83,18 @@ var sv;
             this.SV = sv;
         }
         WebSocketTransport.prototype.init = function (onConnected) {
-            this.ServerSocket = new WebSocket(this.SV.ServerURL);
+            var url = this.SV.ServerURL + "/websocket";
+            this.ServerSocket = new WebSocket(url);
+            var self = this;
             this.ServerSocket.onopen = function (evt) {
                 onConnected(null);
             };
-            this.ServerSocket.onclose = this.onWSClosed;
-            this.ServerSocket.onmessage = this.onWSMessage;
+            this.ServerSocket.onclose = function (evt) {
+                self.onWSClosed(evt);
+            };
+            this.ServerSocket.onmessage = function (evt) {
+                self.onWSMessage(evt);
+            };
             this.ServerSocket.onerror = function (evt) {
                 if (onConnected != null) {
                     onConnected(sv_2.makeClientError(1));
@@ -100,8 +106,11 @@ var sv;
             var message = api + ":" + messageNum + ":" + JSON.stringify(request);
             if (this.SV.LogMessagesToConsole)
                 console.log("WS<- " + message);
+            var self = this.SV;
             var callback = function (isError, reply) {
                 if (isError) {
+                    if (self.GlobalErrorHandler)
+                        self.GlobalErrorHandler(reply);
                     if (onError)
                         onError(reply);
                 }
@@ -121,7 +130,7 @@ var sv;
             if (this.SV.LogMessagesToConsole)
                 console.log("WS-> " + messageStr);
             var split1 = messageStr.indexOf(":");
-            if (split1 < 0) {
+            if (split1 < 1) {
                 console.log("Incorrectly formatted message");
                 return;
             }
@@ -165,7 +174,7 @@ var sv;
             }
         };
         return WebSocketTransport;
-    })();
+    }());
     sv_2.WebSocketTransport = WebSocketTransport;
 })(sv || (sv = {}));
 /// <reference path="serverville_messages.ts" />
@@ -453,7 +462,7 @@ var sv;
             }, onSuccess, onError);
         };
         return Serverville;
-    })();
+    }());
     sv.Serverville = Serverville;
 })(sv || (sv = {}));
 var sv;
@@ -559,7 +568,7 @@ var sv;
             });
         };
         return KeyData;
-    })();
+    }());
     sv.KeyData = KeyData;
 })(sv || (sv = {}));
 //# sourceMappingURL=serverville.js.map

@@ -1,0 +1,10 @@
+{
+	"compilerOptions": {
+		"target": "es5",
+		"out": "tests.js",
+		"sourceMap": true
+	},
+	"files": [
+		"tests.ts"
+	]
+}

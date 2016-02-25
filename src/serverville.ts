@@ -258,7 +258,7 @@ namespace sv
 			);
 		}
 
-		setUserKey(key:string, value:any, data_type:string, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setUserKey(key:string, value:any, data_type:JsonDataTypeEnum, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.setUserKeyReq(
 				{
@@ -435,7 +435,7 @@ namespace sv
 			);
 		}
 
-		setTransientValue(key:string, value:any, data_type:string, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setTransientValue(key:string, value:any, data_type:JsonDataTypeEnum, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.setTransientValueReq(
 				{
@@ -609,7 +609,7 @@ namespace sv
 			);
 		}
 
-		sendClientMessage(to:string, message_type:string, value:any, data_type:string, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		sendClientMessage(to:string, message_type:string, value:any, data_type:JsonDataTypeEnum, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.sendClientMessageReq(
 				{

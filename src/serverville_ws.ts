@@ -19,16 +19,27 @@ namespace sv
         
         public init(onConnected:(err:ErrorReply)=>void)
         {
-            this.ServerSocket = new WebSocket(this.SV.ServerURL);
+            var url:string = this.SV.ServerURL+"/websocket";
+            
+            this.ServerSocket = new WebSocket(url);
+            
+            var self:WebSocketTransport = this;
             
             this.ServerSocket.onopen = function(evt:Event):void
             {
                 onConnected(null);
             };
             
-            this.ServerSocket.onclose = this.onWSClosed;
-            this.ServerSocket.onmessage = this.onWSMessage;
-
+            this.ServerSocket.onclose = function(evt:CloseEvent):void
+            {
+                self.onWSClosed(evt);
+            }
+            
+            this.ServerSocket.onmessage = function(evt:MessageEvent):void
+            {
+                self.onWSMessage(evt);
+            }
+            
             this.ServerSocket.onerror = function(evt:ErrorEvent):void
             {
                 if(onConnected != null)
@@ -46,10 +57,14 @@ namespace sv
             if(this.SV.LogMessagesToConsole)
                 console.log("WS<- "+message);
             
+            var self:Serverville = this.SV;
+            
             var callback:ServervilleWSReplyHandler = function(isError:boolean, reply:Object):void
             {
                 if(isError)
                 {
+                    if(self.GlobalErrorHandler)
+						self.GlobalErrorHandler(<ErrorReply>reply);
                     if(onError)
                         onError(<ErrorReply>reply);
                 }
@@ -78,7 +93,7 @@ namespace sv
                 console.log("WS-> "+messageStr);
             
             var split1:number = messageStr.indexOf(":");
-            if(split1 < 0)
+            if(split1 < 1)
             {
                 console.log("Incorrectly formatted message");
                 return;

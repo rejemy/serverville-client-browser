@@ -1,0 +1,44 @@
+declare namespace sv
+{
+    export interface ErrorReply
+    {
+        errorCode:number;
+        errorMessage:string;
+        errorDetails:string;
+    }
+   
+{{Types}}
+
+    export class Serverville
+	{
+        ServerURL:string;
+		SessionId:string;
+		UserInfo:SignInReply;
+		GlobalErrorHandler:(ev:ErrorReply)=>void;
+        LogMessagesToConsole:boolean;
+        
+        constructor(url:string);
+        init(onComplete:(user:SignInReply, err:ErrorReply)=>void):void;
+        loadUserKeyData(onDone?:()=>void):KeyData;
+		loadKeyData(id:string, onDone?:()=>void):KeyData;
+		isSignedIn():boolean;
+        signOut():void;
+
+{{APIs}}
+
+    }
+    
+    export class KeyData
+	{
+        id:string;
+		server:Serverville;
+		data:any;
+        
+		constructor(server:Serverville, id:string);
+		loadAll(onDone?:()=>void):void;
+		refresh(onDone?:()=>void):void;
+        set(key:string, val:any):void;
+		set(key:string, val:any, data_type:string):void;
+		save(onDone?:()=>void):void;
+	}
+}

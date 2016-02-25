@@ -33,7 +33,7 @@ namespace sv
 			
 			req.onload = function(ev:Event):void
 			{
-                if(this.LogMessagesToConsole)
+                if(self.LogMessagesToConsole)
                     console.log("HTTP-> "+req.response);
                 
 				if (req.status >= 200 && req.status < 400)

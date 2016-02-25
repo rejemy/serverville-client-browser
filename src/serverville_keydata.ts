@@ -7,9 +7,9 @@ namespace sv
 		id:string;
 		server:Serverville;
 		data:any;
-		data_info:{[key:string]:DataItemReply};
-		local_dirty:{[key:string]:DataItemReply};
-		most_recent:number;
+		private data_info:{[key:string]:DataItemReply};
+		private local_dirty:{[key:string]:DataItemReply};
+		private most_recent:number;
 		
 		constructor(server:Serverville, id:string)
 		{
@@ -93,7 +93,7 @@ namespace sv
 
 		}
 		
-		set(key:string, val:any, data_type:string = null):void
+		set(key:string, val:any, data_type:JsonDataTypeEnum = null):void
 		{
 			if(this.server.UserInfo == null || this.server.UserInfo.user_id != this.id)
 				throw "Read-only data!";
