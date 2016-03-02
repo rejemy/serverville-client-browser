@@ -95,7 +95,8 @@ namespace sv
 		
 		set(key:string, val:any, data_type:JsonDataTypeEnum = null):void
 		{
-			if(this.server.UserInfo == null || this.server.UserInfo.user_id != this.id)
+			var user:SignInReply = this.server.userInfo();
+			if(user == null || user.user_id != this.id)
 				throw "Read-only data!";
 				
 			this.data[key] = val;
@@ -124,7 +125,8 @@ namespace sv
 		
 		save(onDone?:()=>void):void
 		{
-			if(this.server.UserInfo == null || this.server.UserInfo.user_id != this.id)
+			var user:SignInReply = this.server.userInfo();
+			if(user == null || user.user_id != this.id)
 				throw "Read-only data!";
 				
 			var saveSet:SetUserDataRequest[] = [];

@@ -47,8 +47,7 @@ namespace sv
 				else
 				{
                     var error:ErrorReply = JSON.parse(req.response);
-					if(self.GlobalErrorHandler)
-						self.GlobalErrorHandler(error);
+					self._onServerError(error);
 					if(onError)
 						onError(error);
 				}
@@ -59,8 +58,7 @@ namespace sv
 			{
                 var err:ErrorReply = makeClientError(1);
                 
-				if(self.GlobalErrorHandler)
-					self.GlobalErrorHandler(err);
+				self._onServerError(err);
 				if(onError)
 					onError(err);
 			};

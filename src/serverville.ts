@@ -6,21 +6,26 @@
 
 namespace sv
 {
-    
+
+	type ServerMessageTypeHandler = (from:string, msg:Object)=>void;
+	
 	export class Serverville
 	{
 		ServerURL:string;
 
 		SessionId:string;
         
-		UserInfo:SignInReply;
-		
-		GlobalErrorHandler:(ev:ErrorReply)=>void;
-        
+		private UserInfo:SignInReply;
+	
         LogMessagesToConsole:boolean = false;
         
-        Transport:ServervilleTransport;
+        private Transport:ServervilleTransport;
         
+		GlobalErrorHandler:(ev:ErrorReply)=>void;
+		
+		ServerMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler} = {};
+		ServerMessageHandler:(messageType:string, from:string, msg:Object)=>void;
+		
 		constructor(url:string)
 		{
 			this.ServerURL = url;
@@ -86,6 +91,34 @@ namespace sv
 				this.UserInfo = userInfo;
 				this.SessionId = userInfo.session_id;
 				localStorage.setItem("SessionId", this.SessionId);
+			}
+		}
+		
+		userInfo():SignInReply
+		{
+			return this.UserInfo;
+		}
+		
+		_onServerError(err:ErrorReply):void
+		{
+			if(this.GlobalErrorHandler != null)
+				this.GlobalErrorHandler(err);
+		}
+		
+		_onServerMessage(messageId:string, from:string, data:Object):void
+		{
+			var typeHandler:ServerMessageTypeHandler = this.ServerMessageTypeHandlers[messageId];
+			if(typeHandler != null)
+			{
+				typeHandler(from, data);
+			}
+			else if(this.ServerMessageHandler != null)
+			{
+				this.ServerMessageHandler(messageId, from, data);
+			}
+			else
+			{
+				console.log("No handler for message "+messageId);
 			}
 		}
 		

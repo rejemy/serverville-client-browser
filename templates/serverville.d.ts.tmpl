@@ -9,21 +9,26 @@ declare namespace sv
    
 {{Types}}
 
+	type ServerMessageTypeHandler = (from:string, msg:Object)=>void;
+	
     export class Serverville
 	{
         ServerURL:string;
 		SessionId:string;
-		UserInfo:SignInReply;
-		GlobalErrorHandler:(ev:ErrorReply)=>void;
         LogMessagesToConsole:boolean;
-        
+		GlobalErrorHandler:(ev:ErrorReply)=>void;
+        ServerMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler};
+		ServerMessageHandler:(messageType:string, from:string, msg:Object)=>void;
+		
         constructor(url:string);
         init(onComplete:(user:SignInReply, err:ErrorReply)=>void):void;
         loadUserKeyData(onDone?:()=>void):KeyData;
 		loadKeyData(id:string, onDone?:()=>void):KeyData;
 		isSignedIn():boolean;
         signOut():void;
-
+		userInfo():SignInReply;
+		
+		apiByName(api:string, request:Object, onSuccess:(reply:Object)=>void, onError?:(reply:ErrorReply)=>void):void;
 {{APIs}}
 
     }

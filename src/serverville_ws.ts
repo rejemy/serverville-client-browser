@@ -63,8 +63,7 @@ namespace sv
             {
                 if(isError)
                 {
-                    if(self.GlobalErrorHandler)
-						self.GlobalErrorHandler(<ErrorReply>reply);
+					self._onServerError(<ErrorReply>reply);
                     if(onError)
                         onError(<ErrorReply>reply);
                 }
@@ -121,17 +120,7 @@ namespace sv
                 var messageJson:string = messageStr.substring(split3+1);
                 var messageData:Object = JSON.parse(messageJson);
                 
-                /*if(this.ServerMessageHandler != null)
-                {
-                    var handler:ServervilleMessageHandler = this.ServerMessageHandler[messageId];
-                    if(handler == null)
-                    {
-                        console.log("No handler for message of type "+messageId);
-                        return;
-                    }
-                    
-                    handler(messageFrom, messageData);
-                }*/
+				this.SV._onServerMessage(messageId, messageFrom, messageData);
             }
             else if(messageType == "E" || messageType == "R")
             {

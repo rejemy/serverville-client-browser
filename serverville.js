@@ -54,16 +54,14 @@ var sv;
                 }
                 else {
                     var error = JSON.parse(req.response);
-                    if (self.GlobalErrorHandler)
-                        self.GlobalErrorHandler(error);
+                    self._onServerError(error);
                     if (onError)
                         onError(error);
                 }
             };
             req.onerror = function (ev) {
                 var err = sv_1.makeClientError(1);
-                if (self.GlobalErrorHandler)
-                    self.GlobalErrorHandler(err);
+                self._onServerError(err);
                 if (onError)
                     onError(err);
             };
@@ -109,8 +107,7 @@ var sv;
             var self = this.SV;
             var callback = function (isError, reply) {
                 if (isError) {
-                    if (self.GlobalErrorHandler)
-                        self.GlobalErrorHandler(reply);
+                    self._onServerError(reply);
                     if (onError)
                         onError(reply);
                 }
@@ -151,6 +148,7 @@ var sv;
                 var messageFrom = messageStr.substring(split2 + 1, split3);
                 var messageJson = messageStr.substring(split3 + 1);
                 var messageData = JSON.parse(messageJson);
+                this.SV._onServerMessage(messageId, messageFrom, messageData);
             }
             else if (messageType == "E" || messageType == "R") {
                 // Reply
@@ -186,6 +184,7 @@ var sv;
     var Serverville = (function () {
         function Serverville(url) {
             this.LogMessagesToConsole = false;
+            this.ServerMessageTypeHandlers = {};
             this.ServerURL = url;
             this.SessionId = localStorage.getItem("SessionId");
             if (this.ServerURL.substr(0, 5) == "ws://" || this.ServerURL.substr(0, 6) == "wss://") {
@@ -228,6 +227,25 @@ var sv;
                 this.UserInfo = userInfo;
                 this.SessionId = userInfo.session_id;
                 localStorage.setItem("SessionId", this.SessionId);
+            }
+        };
+        Serverville.prototype.userInfo = function () {
+            return this.UserInfo;
+        };
+        Serverville.prototype._onServerError = function (err) {
+            if (this.GlobalErrorHandler != null)
+                this.GlobalErrorHandler(err);
+        };
+        Serverville.prototype._onServerMessage = function (messageId, from, data) {
+            var typeHandler = this.ServerMessageTypeHandlers[messageId];
+            if (typeHandler != null) {
+                typeHandler(from, data);
+            }
+            else if (this.ServerMessageHandler != null) {
+                this.ServerMessageHandler(messageId, from, data);
+            }
+            else {
+                console.log("No handler for message " + messageId);
             }
         };
         Serverville.prototype.loadUserKeyData = function (onDone) {
@@ -526,7 +544,8 @@ var sv;
         };
         KeyData.prototype.set = function (key, val, data_type) {
             if (data_type === void 0) { data_type = null; }
-            if (this.server.UserInfo == null || this.server.UserInfo.user_id != this.id)
+            var user = this.server.userInfo();
+            if (user == null || user.user_id != this.id)
                 throw "Read-only data!";
             this.data[key] = val;
             var info = this.data_info[key];
@@ -550,7 +569,8 @@ var sv;
             this.local_dirty[key] = info;
         };
         KeyData.prototype.save = function (onDone) {
-            if (this.server.UserInfo == null || this.server.UserInfo.user_id != this.id)
+            var user = this.server.userInfo();
+            if (user == null || user.user_id != this.id)
                 throw "Read-only data!";
             var saveSet = [];
             for (var key in this.local_dirty) {
