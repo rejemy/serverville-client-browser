@@ -116,6 +116,15 @@ namespace sv
 			this.setUserInfo(null);
 		}
         
+        apiByName(api:string, request:Object, onSuccess:(reply:Object)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.Transport.callApi(api,
+				request,
+				onSuccess,
+				onError
+			);
+		}
+        
 		signInReq(request:SignIn, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;

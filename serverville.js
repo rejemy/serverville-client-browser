@@ -248,6 +248,9 @@ var sv;
         Serverville.prototype.signOut = function () {
             this.setUserInfo(null);
         };
+        Serverville.prototype.apiByName = function (api, request, onSuccess, onError) {
+            this.Transport.callApi(api, request, onSuccess, onError);
+        };
         Serverville.prototype.signInReq = function (request, onSuccess, onError) {
             var self = this;
             this.Transport.callApi("SignIn", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
