@@ -11,7 +11,7 @@ namespace sv
 		password:string;
 	}
 
-	export interface SignInReply
+	export interface UserAccountInfo
 	{
 		user_id:string;
 		username:string;
@@ -26,14 +26,6 @@ namespace sv
 
 	export interface CreateAnonymousAccount
 	{
-	}
-
-	export interface CreateAccountReply
-	{
-		user_id:string;
-		username:string;
-		email:string;
-		session_id:string;
 	}
 
 	export interface CreateAccount

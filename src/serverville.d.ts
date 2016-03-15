@@ -14,7 +14,7 @@ declare namespace sv
 		password:string;
 	}
 
-	export interface SignInReply
+	export interface UserAccountInfo
 	{
 		user_id:string;
 		username:string;
@@ -29,14 +29,6 @@ declare namespace sv
 
 	export interface CreateAnonymousAccount
 	{
-	}
-
-	export interface CreateAccountReply
-	{
-		user_id:string;
-		username:string;
-		email:string;
-		session_id:string;
 	}
 
 	export interface CreateAccount
@@ -216,26 +208,26 @@ declare namespace sv
 		ServerMessageHandler:(messageType:string, from:string, msg:Object)=>void;
 		
         constructor(url:string);
-        init(onComplete:(user:SignInReply, err:ErrorReply)=>void):void;
+        init(onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void;
         loadUserKeyData(onDone?:()=>void):KeyData;
 		loadKeyData(id:string, onDone?:()=>void):KeyData;
 		isSignedIn():boolean;
         signOut():void;
-		userInfo():SignInReply;
+		userInfo():UserAccountInfo;
 		
 		apiByName(api:string, request:Object, onSuccess:(reply:Object)=>void, onError?:(reply:ErrorReply)=>void):void;
-		signInReq(request:SignIn, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		signIn(username:string, email:string, password:string, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		validateSessionReq(request:ValidateSessionRequest, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		validateSession(session_id:string, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		createAnonymousAccountReq(request:CreateAnonymousAccount, onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		createAnonymousAccount(onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		createAccountReq(request:CreateAccount, onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		createAccount(username:string, email:string, password:string, onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		convertToFullAccountReq(request:CreateAccount, onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		convertToFullAccount(username:string, email:string, password:string, onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		getUserInfoReq(request:GetUserInfo, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		getUserInfo(onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		signInReq(request:SignIn, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		signIn(username:string, email:string, password:string, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		validateSessionReq(request:ValidateSessionRequest, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		validateSession(session_id:string, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		createAnonymousAccountReq(request:CreateAnonymousAccount, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		createAnonymousAccount(onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		createAccountReq(request:CreateAccount, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		createAccount(username:string, email:string, password:string, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		convertToFullAccountReq(request:CreateAccount, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		convertToFullAccount(username:string, email:string, password:string, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getUserInfoReq(request:GetUserInfo, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getUserInfo(onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setUserKeyReq(request:SetUserDataRequest, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setUserKey(key:string, value:any, data_type:JsonDataTypeEnum, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setUserKeysReq(request:UserDataRequestList, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;

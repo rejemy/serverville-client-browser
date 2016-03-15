@@ -15,7 +15,7 @@ namespace sv
 
 		SessionId:string;
         
-		private UserInfo:SignInReply;
+		private UserInfo:UserAccountInfo;
 	
         LogMessagesToConsole:boolean = false;
         
@@ -45,7 +45,7 @@ namespace sv
             }
 		}
 		
-		init(onComplete:(user:SignInReply, err:ErrorReply)=>void):void
+		init(onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void
 		{
 			var self:Serverville = this;
 			
@@ -60,7 +60,7 @@ namespace sv
                 if(self.SessionId)
                 {
                     self.validateSession(self.SessionId,
-                    function(reply:SignInReply):void
+                    function(reply:UserAccountInfo):void
                     {
                         onComplete(reply, null);
                     },
@@ -78,7 +78,7 @@ namespace sv
             
 		}
 	
-		private setUserInfo(userInfo:SignInReply):void
+		private setUserInfo(userInfo:UserAccountInfo):void
 		{
 			if(userInfo == null)
 			{
@@ -94,7 +94,7 @@ namespace sv
 			}
 		}
 		
-		userInfo():SignInReply
+		userInfo():UserAccountInfo
 		{
 			return this.UserInfo;
 		}

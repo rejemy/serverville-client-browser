@@ -21,12 +21,12 @@ declare namespace sv
 		ServerMessageHandler:(messageType:string, from:string, msg:Object)=>void;
 		
         constructor(url:string);
-        init(onComplete:(user:SignInReply, err:ErrorReply)=>void):void;
+        init(onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void;
         loadUserKeyData(onDone?:()=>void):KeyData;
 		loadKeyData(id:string, onDone?:()=>void):KeyData;
 		isSignedIn():boolean;
         signOut():void;
-		userInfo():SignInReply;
+		userInfo():UserAccountInfo;
 		
 		apiByName(api:string, request:Object, onSuccess:(reply:Object)=>void, onError?:(reply:ErrorReply)=>void):void;
 {{APIs}}

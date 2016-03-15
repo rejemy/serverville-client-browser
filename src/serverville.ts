@@ -15,7 +15,7 @@ namespace sv
 
 		SessionId:string;
         
-		private UserInfo:SignInReply;
+		private UserInfo:UserAccountInfo;
 	
         LogMessagesToConsole:boolean = false;
         
@@ -45,7 +45,7 @@ namespace sv
             }
 		}
 		
-		init(onComplete:(user:SignInReply, err:ErrorReply)=>void):void
+		init(onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void
 		{
 			var self:Serverville = this;
 			
@@ -60,7 +60,7 @@ namespace sv
                 if(self.SessionId)
                 {
                     self.validateSession(self.SessionId,
-                    function(reply:SignInReply):void
+                    function(reply:UserAccountInfo):void
                     {
                         onComplete(reply, null);
                     },
@@ -78,7 +78,7 @@ namespace sv
             
 		}
 	
-		private setUserInfo(userInfo:SignInReply):void
+		private setUserInfo(userInfo:UserAccountInfo):void
 		{
 			if(userInfo == null)
 			{
@@ -94,7 +94,7 @@ namespace sv
 			}
 		}
 		
-		userInfo():SignInReply
+		userInfo():UserAccountInfo
 		{
 			return this.UserInfo;
 		}
@@ -158,17 +158,17 @@ namespace sv
 			);
 		}
         
-		signInReq(request:SignIn, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		signInReq(request:SignIn, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
 			this.Transport.callApi("SignIn",
 				request,
-				function(reply:SignInReply):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
+				function(reply:UserAccountInfo):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
 				onError
 			);
 		}
 
-		signIn(username:string, email:string, password:string, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		signIn(username:string, email:string, password:string, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.signInReq(
 				{
@@ -181,17 +181,17 @@ namespace sv
 			);
 		}
 
-		validateSessionReq(request:ValidateSessionRequest, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		validateSessionReq(request:ValidateSessionRequest, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
 			this.Transport.callApi("ValidateSession",
 				request,
-				function(reply:SignInReply):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
+				function(reply:UserAccountInfo):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
 				onError
 			);
 		}
 
-		validateSession(session_id:string, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		validateSession(session_id:string, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.validateSessionReq(
 				{
@@ -202,17 +202,17 @@ namespace sv
 			);
 		}
 
-		createAnonymousAccountReq(request:CreateAnonymousAccount, onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAnonymousAccountReq(request:CreateAnonymousAccount, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-            
+            var self:Serverville = this;
 			this.Transport.callApi("CreateAnonymousAccount",
 				request,
-				onSuccess,
+				function(reply:UserAccountInfo):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
 				onError
 			);
 		}
 
-		createAnonymousAccount(onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAnonymousAccount(onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.createAnonymousAccountReq(
 				{
@@ -223,17 +223,17 @@ namespace sv
 			);
 		}
 
-		createAccountReq(request:CreateAccount, onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAccountReq(request:CreateAccount, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-            
+            var self:Serverville = this;
 			this.Transport.callApi("CreateAccount",
 				request,
-				onSuccess,
+				function(reply:UserAccountInfo):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
 				onError
 			);
 		}
 
-		createAccount(username:string, email:string, password:string, onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAccount(username:string, email:string, password:string, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.createAccountReq(
 				{
@@ -246,17 +246,17 @@ namespace sv
 			);
 		}
 
-		convertToFullAccountReq(request:CreateAccount, onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		convertToFullAccountReq(request:CreateAccount, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-            
+            var self:Serverville = this;
 			this.Transport.callApi("ConvertToFullAccount",
 				request,
-				onSuccess,
+				function(reply:UserAccountInfo):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
 				onError
 			);
 		}
 
-		convertToFullAccount(username:string, email:string, password:string, onSuccess:(reply:CreateAccountReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		convertToFullAccount(username:string, email:string, password:string, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.convertToFullAccountReq(
 				{
@@ -269,17 +269,17 @@ namespace sv
 			);
 		}
 
-		getUserInfoReq(request:GetUserInfo, onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getUserInfoReq(request:GetUserInfo, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
 			this.Transport.callApi("GetUserInfo",
 				request,
-				function(reply:SignInReply):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
+				function(reply:UserAccountInfo):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
 				onError
 			);
 		}
 
-		getUserInfo(onSuccess:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getUserInfo(onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getUserInfoReq(
 				{

@@ -294,13 +294,19 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.createAnonymousAccountReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("CreateAnonymousAccount", request, onSuccess, onError);
+            var self = this;
+            this.Transport.callApi("CreateAnonymousAccount", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
+                onSuccess(reply);
+            } }, onError);
         };
         Serverville.prototype.createAnonymousAccount = function (onSuccess, onError) {
             this.createAnonymousAccountReq({}, onSuccess, onError);
         };
         Serverville.prototype.createAccountReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("CreateAccount", request, onSuccess, onError);
+            var self = this;
+            this.Transport.callApi("CreateAccount", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
+                onSuccess(reply);
+            } }, onError);
         };
         Serverville.prototype.createAccount = function (username, email, password, onSuccess, onError) {
             this.createAccountReq({
@@ -310,7 +316,10 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.convertToFullAccountReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("ConvertToFullAccount", request, onSuccess, onError);
+            var self = this;
+            this.Transport.callApi("ConvertToFullAccount", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
+                onSuccess(reply);
+            } }, onError);
         };
         Serverville.prototype.convertToFullAccount = function (username, email, password, onSuccess, onError) {
             this.convertToFullAccountReq({
