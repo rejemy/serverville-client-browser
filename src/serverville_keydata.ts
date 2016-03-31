@@ -26,13 +26,38 @@ namespace sv
 			this.most_recent = 0;
 		}
 		
+		loadKeys(keys:string[], onDone?:()=>void):void
+		{
+			var self:KeyData = this;
+			
+			this.server.getDataKeys(this.id, keys, 0, false,
+				function(reply:UserDataReply):void
+				{
+					for(var key in reply.values)
+					{
+						var dataInfo:DataItemReply = reply.values[key];
+						self.data_info[dataInfo.key] = dataInfo;
+						self.data[key] = dataInfo.value;
+					}
+					
+					if(onDone)
+						onDone();
+				},
+				function(reply:ErrorReply):void
+				{
+					if(onDone)
+						onDone();
+				}
+			);
+		}
+		
 		loadAll(onDone?:()=>void):void
 		{
 			this.data = {};
 			this.local_dirty = {};
 			
 			var self:KeyData = this;
-			this.server.getAllDataKeys(this.id, 0, true,
+			this.server.getAllDataKeys(this.id, 0, false,
 				function(reply:UserDataReply):void
 				{
 					self.data_info = reply.values;
@@ -48,13 +73,12 @@ namespace sv
 					if(onDone)
 						onDone();
 				},
-				function(reply:Object):void
+				function(reply:ErrorReply):void
 				{
 					if(onDone)
 						onDone();
 				}
 			);
-			
 		}
 		
 		refresh(onDone?:()=>void):void
@@ -84,7 +108,7 @@ namespace sv
 					if(onDone)
 						onDone();
 				},
-				function(reply:Object):void
+				function(reply:ErrorReply):void
 				{
 					if(onDone)
 						onDone();
@@ -152,7 +176,7 @@ namespace sv
 					if(onDone)
 						onDone();
 				},
-				function(reply:Object):void
+				function(reply:ErrorReply):void
 				{
 					if(onDone)
 						onDone();

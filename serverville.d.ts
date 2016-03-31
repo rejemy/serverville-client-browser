@@ -273,6 +273,7 @@ declare namespace sv
 		data:any;
         
 		constructor(server:Serverville, id:string);
+		loadKeys(keys:string[], onDone?:()=>void):void;
 		loadAll(onDone?:()=>void):void;
 		refresh(onDone?:()=>void):void;
         set(key:string, val:any):void;
