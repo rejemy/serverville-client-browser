@@ -467,6 +467,49 @@ namespace sv
 			);
 		}
 
+		getKeyDataRecordReq(request:KeyDataRecordRequest, onSuccess:(reply:KeyDataInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.Transport.callApi("GetKeyDataRecord",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getKeyDataRecord(id:string, onSuccess:(reply:KeyDataInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getKeyDataRecordReq(
+				{
+					"id":id
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		setDataKeysReq(request:SetGlobalDataRequest, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.Transport.callApi("SetDataKeys",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		setDataKeys(id:string, values:Array<SetUserDataRequest>, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.setDataKeysReq(
+				{
+					"id":id,
+					"values":values
+				},
+				onSuccess,
+				onError
+			);
+		}
+
 		setTransientValueReq(request:SetTransientValueRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             

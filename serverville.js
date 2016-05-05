@@ -410,6 +410,23 @@ var sv;
                 "include_deleted": include_deleted
             }, onSuccess, onError);
         };
+        Serverville.prototype.getKeyDataRecordReq = function (request, onSuccess, onError) {
+            this.Transport.callApi("GetKeyDataRecord", request, onSuccess, onError);
+        };
+        Serverville.prototype.getKeyDataRecord = function (id, onSuccess, onError) {
+            this.getKeyDataRecordReq({
+                "id": id
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.setDataKeysReq = function (request, onSuccess, onError) {
+            this.Transport.callApi("SetDataKeys", request, onSuccess, onError);
+        };
+        Serverville.prototype.setDataKeys = function (id, values, onSuccess, onError) {
+            this.setDataKeysReq({
+                "id": id,
+                "values": values
+            }, onSuccess, onError);
+        };
         Serverville.prototype.setTransientValueReq = function (request, onSuccess, onError) {
             this.Transport.callApi("SetTransientValue", request, onSuccess, onError);
         };
@@ -510,11 +527,26 @@ var sv;
             this.local_dirty = {};
             this.most_recent = 0;
         }
+        KeyData.prototype.loadKeys = function (keys, onDone) {
+            var self = this;
+            this.server.getDataKeys(this.id, keys, 0, false, function (reply) {
+                for (var key in reply.values) {
+                    var dataInfo = reply.values[key];
+                    self.data_info[dataInfo.key] = dataInfo;
+                    self.data[key] = dataInfo.value;
+                }
+                if (onDone)
+                    onDone();
+            }, function (reply) {
+                if (onDone)
+                    onDone();
+            });
+        };
         KeyData.prototype.loadAll = function (onDone) {
             this.data = {};
             this.local_dirty = {};
             var self = this;
-            this.server.getAllDataKeys(this.id, 0, true, function (reply) {
+            this.server.getAllDataKeys(this.id, 0, false, function (reply) {
                 self.data_info = reply.values;
                 for (var key in self.data_info) {
                     var dataInfo = self.data_info[key];
@@ -532,14 +564,15 @@ var sv;
         KeyData.prototype.refresh = function (onDone) {
             var self = this;
             this.server.getAllDataKeys(this.id, this.most_recent, true, function (reply) {
-                self.data_info = reply.values;
                 for (var key in self.data_info) {
                     var dataInfo = self.data_info[key];
                     if (dataInfo.deleted) {
                         delete self.data[key];
+                        delete self.data_info[key];
                     }
                     else {
                         self.data[key] = dataInfo.value;
+                        self.data_info[key] = dataInfo;
                     }
                     if (dataInfo.modified > self.most_recent)
                         self.most_recent = dataInfo.modified;

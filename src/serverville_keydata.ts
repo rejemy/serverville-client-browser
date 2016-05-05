@@ -87,18 +87,18 @@ namespace sv
 			this.server.getAllDataKeys(this.id, this.most_recent, true,
 				function(reply:UserDataReply):void
 				{
-					self.data_info = reply.values;
-					
 					for(var key in self.data_info)
 					{
 						var dataInfo:DataItemReply = self.data_info[key];
 						if(dataInfo.deleted)
 						{
 							delete self.data[key];
+							delete self.data_info[key];
 						}
 						else
 						{
 							self.data[key] = dataInfo.value;
+							self.data_info[key] = dataInfo;
 						}
 						
 						if(dataInfo.modified > self.most_recent)

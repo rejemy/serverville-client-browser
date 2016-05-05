@@ -136,6 +136,28 @@ declare namespace sv
 		include_deleted:boolean;
 	}
 
+	export interface KeyDataRecordRequest
+	{
+		id:string;
+	}
+
+	export interface KeyDataInfo
+	{
+		id:string;
+		type:string;
+		owner:string;
+		parent:string;
+		version:number;
+		created:number;
+		modified:number;
+	}
+
+	export interface SetGlobalDataRequest
+	{
+		id:string;
+		values:Array<SetUserDataRequest>;
+	}
+
 	export interface SetTransientValueRequest
 	{
 		key:string;
@@ -244,6 +266,10 @@ declare namespace sv
 		getDataKeys(id:string, keys:Array<string>, since:number, include_deleted:boolean, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getAllDataKeysReq(request:AllGlobalKeysRequest, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getAllDataKeys(id:string, since:number, include_deleted:boolean, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getKeyDataRecordReq(request:KeyDataRecordRequest, onSuccess:(reply:KeyDataInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getKeyDataRecord(id:string, onSuccess:(reply:KeyDataInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		setDataKeysReq(request:SetGlobalDataRequest, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		setDataKeys(id:string, values:Array<SetUserDataRequest>, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setTransientValueReq(request:SetTransientValueRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setTransientValue(key:string, value:any, data_type:JsonDataTypeEnum, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setTransientValuesReq(request:SetTransientValuesRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
@@ -273,7 +299,6 @@ declare namespace sv
 		data:any;
         
 		constructor(server:Serverville, id:string);
-		loadKeys(keys:string[], onDone?:()=>void):void;
 		loadAll(onDone?:()=>void):void;
 		refresh(onDone?:()=>void):void;
         set(key:string, val:any):void;

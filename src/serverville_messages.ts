@@ -133,6 +133,28 @@ namespace sv
 		include_deleted:boolean;
 	}
 
+	export interface KeyDataRecordRequest
+	{
+		id:string;
+	}
+
+	export interface KeyDataInfo
+	{
+		id:string;
+		type:string;
+		owner:string;
+		parent:string;
+		version:number;
+		created:number;
+		modified:number;
+	}
+
+	export interface SetGlobalDataRequest
+	{
+		id:string;
+		values:Array<SetUserDataRequest>;
+	}
+
 	export interface SetTransientValueRequest
 	{
 		key:string;
