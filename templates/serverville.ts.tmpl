@@ -7,7 +7,7 @@
 namespace sv
 {
 
-	type ServerMessageTypeHandler = (from:string, msg:Object)=>void;
+	type ServerMessageTypeHandler = (from:string, via:string, msg:Object)=>void;
 	
 	export class Serverville
 	{
@@ -24,7 +24,7 @@ namespace sv
 		GlobalErrorHandler:(ev:ErrorReply)=>void;
 		
 		ServerMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler} = {};
-		ServerMessageHandler:(messageType:string, from:string, msg:Object)=>void;
+		ServerMessageHandler:(messageType:string, from:string, via:string, msg:Object)=>void;
 		
 		constructor(url:string)
 		{
@@ -105,16 +105,16 @@ namespace sv
 				this.GlobalErrorHandler(err);
 		}
 		
-		_onServerMessage(messageId:string, from:string, data:Object):void
+		_onServerMessage(messageId:string, from:string, via:string, data:Object):void
 		{
 			var typeHandler:ServerMessageTypeHandler = this.ServerMessageTypeHandlers[messageId];
 			if(typeHandler != null)
 			{
-				typeHandler(from, data);
+				typeHandler(from, via, data);
 			}
 			else if(this.ServerMessageHandler != null)
 			{
-				this.ServerMessageHandler(messageId, from, data);
+				this.ServerMessageHandler(messageId, from, via, data);
 			}
 			else
 			{

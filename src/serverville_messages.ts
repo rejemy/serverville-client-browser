@@ -157,6 +157,7 @@ namespace sv
 
 	export interface SetTransientValueRequest
 	{
+		alias:string;
 		key:string;
 		value:any;
 		data_type:JsonDataTypeEnum;
@@ -166,41 +167,70 @@ namespace sv
 	{
 	}
 
+	export interface SetTransientValueItem
+	{
+		key:string;
+		value:any;
+		data_type:JsonDataTypeEnum;
+	}
+
 	export interface SetTransientValuesRequest
 	{
-		values:Array<SetTransientValueRequest>;
+		alias:string;
+		values:Array<SetTransientValueItem>;
 	}
 
 	export interface GetTransientValueRequest
 	{
 		id:string;
+		alias:string;
 		key:string;
 	}
 
 	export interface GetTransientValuesRequest
 	{
 		id:string;
+		alias:string;
 		keys:Array<string>;
 	}
 
 	export interface GetAllTransientValuesRequest
 	{
 		id:string;
+		alias:string;
 	}
 
 	export interface JoinChannelRequest
 	{
+		alias:string;
 		id:string;
-		listen_only:boolean;
+	}
+
+	export interface ChannelMemberInfo
+	{
+		id:string;
+		values:{[key:string]:any};
 	}
 
 	export interface ChannelInfo
 	{
 		id:string;
-		members:Array<string>;
+		values:{[key:string]:any};
+		members:{[key:string]:ChannelMemberInfo};
 	}
 
 	export interface LeaveChannelRequest
+	{
+		alias:string;
+		id:string;
+	}
+
+	export interface ListenToResidentRequest
+	{
+		id:string;
+	}
+
+	export interface StopListenToResidentRequest
 	{
 		id:string;
 	}

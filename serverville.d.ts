@@ -160,6 +160,7 @@ declare namespace sv
 
 	export interface SetTransientValueRequest
 	{
+		alias:string;
 		key:string;
 		value:any;
 		data_type:JsonDataTypeEnum;
@@ -169,41 +170,70 @@ declare namespace sv
 	{
 	}
 
+	export interface SetTransientValueItem
+	{
+		key:string;
+		value:any;
+		data_type:JsonDataTypeEnum;
+	}
+
 	export interface SetTransientValuesRequest
 	{
-		values:Array<SetTransientValueRequest>;
+		alias:string;
+		values:Array<SetTransientValueItem>;
 	}
 
 	export interface GetTransientValueRequest
 	{
 		id:string;
+		alias:string;
 		key:string;
 	}
 
 	export interface GetTransientValuesRequest
 	{
 		id:string;
+		alias:string;
 		keys:Array<string>;
 	}
 
 	export interface GetAllTransientValuesRequest
 	{
 		id:string;
+		alias:string;
 	}
 
 	export interface JoinChannelRequest
 	{
+		alias:string;
 		id:string;
-		listen_only:boolean;
+	}
+
+	export interface ChannelMemberInfo
+	{
+		id:string;
+		values:{[key:string]:any};
 	}
 
 	export interface ChannelInfo
 	{
 		id:string;
-		members:Array<string>;
+		values:{[key:string]:any};
+		members:{[key:string]:ChannelMemberInfo};
 	}
 
 	export interface LeaveChannelRequest
+	{
+		alias:string;
+		id:string;
+	}
+
+	export interface ListenToResidentRequest
+	{
+		id:string;
+	}
+
+	export interface StopListenToResidentRequest
 	{
 		id:string;
 	}
@@ -271,21 +301,23 @@ declare namespace sv
 		setDataKeysReq(request:SetGlobalDataRequest, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setDataKeys(id:string, values:Array<SetUserDataRequest>, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setTransientValueReq(request:SetTransientValueRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		setTransientValue(key:string, value:any, data_type:JsonDataTypeEnum, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		setTransientValue(alias:string, key:string, value:any, data_type:JsonDataTypeEnum, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setTransientValuesReq(request:SetTransientValuesRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		setTransientValues(values:Array<SetTransientValueRequest>, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		setTransientValues(alias:string, values:Array<SetTransientValueItem>, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getTransientValueReq(request:GetTransientValueRequest, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		getTransientValue(id:string, key:string, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getTransientValue(id:string, alias:string, key:string, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getTransientValuesReq(request:GetTransientValuesRequest, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		getTransientValues(id:string, keys:Array<string>, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getTransientValues(id:string, alias:string, keys:Array<string>, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getAllTransientValuesReq(request:GetAllTransientValuesRequest, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		getAllTransientValues(id:string, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		getChannelInfoReq(request:JoinChannelRequest, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
-		getChannelInfo(id:string, listen_only:boolean, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
-		joinChannelReq(request:JoinChannelRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		joinChannel(id:string, listen_only:boolean, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getAllTransientValues(id:string, alias:string, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		joinChannelReq(request:JoinChannelRequest, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		joinChannel(alias:string, id:string, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		leaveChannelReq(request:LeaveChannelRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		leaveChannel(id:string, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		leaveChannel(alias:string, id:string, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		listenToChannelReq(request:ListenToResidentRequest, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		listenToChannel(id:string, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		stopListenToChannelReq(request:StopListenToResidentRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		stopListenToChannel(id:string, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		sendClientMessageReq(request:TransientMessageRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		sendClientMessage(to:string, message_type:string, value:any, data_type:JsonDataTypeEnum, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 

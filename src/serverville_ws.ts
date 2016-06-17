@@ -114,13 +114,20 @@ namespace sv
                     console.log("Incorrectly formatted message");
                     return;
                 }
+                var split4:number = messageStr.indexOf(":", split3+1);
+                if(split4 < 0)
+                {
+                    console.log("Incorrectly formatted message");
+                    return;
+                }
                 
-                var messageId:string = messageStr.substring(split1+1, split2);
+                var messageType:string = messageStr.substring(split1+1, split2);
                 var messageFrom:string = messageStr.substring(split2+1, split3);
-                var messageJson:string = messageStr.substring(split3+1);
+                var messageVia:string = messageStr.substring(split3+1, split4);
+                var messageJson:string = messageStr.substring(split4+1);
                 var messageData:Object = JSON.parse(messageJson);
                 
-				this.SV._onServerMessage(messageId, messageFrom, messageData);
+				this.SV._onServerMessage(messageType, messageFrom, messageVia, messageData);
             }
             else if(messageType == "E" || messageType == "R")
             {

@@ -144,11 +144,17 @@ var sv;
                     console.log("Incorrectly formatted message");
                     return;
                 }
-                var messageId = messageStr.substring(split1 + 1, split2);
+                var split4 = messageStr.indexOf(":", split3 + 1);
+                if (split4 < 0) {
+                    console.log("Incorrectly formatted message");
+                    return;
+                }
+                var messageType = messageStr.substring(split1 + 1, split2);
                 var messageFrom = messageStr.substring(split2 + 1, split3);
-                var messageJson = messageStr.substring(split3 + 1);
+                var messageVia = messageStr.substring(split3 + 1, split4);
+                var messageJson = messageStr.substring(split4 + 1);
                 var messageData = JSON.parse(messageJson);
-                this.SV._onServerMessage(messageId, messageFrom, messageData);
+                this.SV._onServerMessage(messageType, messageFrom, messageVia, messageData);
             }
             else if (messageType == "E" || messageType == "R") {
                 // Reply
@@ -236,13 +242,13 @@ var sv;
             if (this.GlobalErrorHandler != null)
                 this.GlobalErrorHandler(err);
         };
-        Serverville.prototype._onServerMessage = function (messageId, from, data) {
+        Serverville.prototype._onServerMessage = function (messageId, from, via, data) {
             var typeHandler = this.ServerMessageTypeHandlers[messageId];
             if (typeHandler != null) {
-                typeHandler(from, data);
+                typeHandler(from, via, data);
             }
             else if (this.ServerMessageHandler != null) {
-                this.ServerMessageHandler(messageId, from, data);
+                this.ServerMessageHandler(messageId, from, via, data);
             }
             else {
                 console.log("No handler for message " + messageId);
@@ -430,8 +436,9 @@ var sv;
         Serverville.prototype.setTransientValueReq = function (request, onSuccess, onError) {
             this.Transport.callApi("SetTransientValue", request, onSuccess, onError);
         };
-        Serverville.prototype.setTransientValue = function (key, value, data_type, onSuccess, onError) {
+        Serverville.prototype.setTransientValue = function (alias, key, value, data_type, onSuccess, onError) {
             this.setTransientValueReq({
+                "alias": alias,
                 "key": key,
                 "value": value,
                 "data_type": data_type
@@ -440,60 +447,72 @@ var sv;
         Serverville.prototype.setTransientValuesReq = function (request, onSuccess, onError) {
             this.Transport.callApi("SetTransientValues", request, onSuccess, onError);
         };
-        Serverville.prototype.setTransientValues = function (values, onSuccess, onError) {
+        Serverville.prototype.setTransientValues = function (alias, values, onSuccess, onError) {
             this.setTransientValuesReq({
+                "alias": alias,
                 "values": values
             }, onSuccess, onError);
         };
         Serverville.prototype.getTransientValueReq = function (request, onSuccess, onError) {
             this.Transport.callApi("GetTransientValue", request, onSuccess, onError);
         };
-        Serverville.prototype.getTransientValue = function (id, key, onSuccess, onError) {
+        Serverville.prototype.getTransientValue = function (id, alias, key, onSuccess, onError) {
             this.getTransientValueReq({
                 "id": id,
+                "alias": alias,
                 "key": key
             }, onSuccess, onError);
         };
         Serverville.prototype.getTransientValuesReq = function (request, onSuccess, onError) {
             this.Transport.callApi("GetTransientValues", request, onSuccess, onError);
         };
-        Serverville.prototype.getTransientValues = function (id, keys, onSuccess, onError) {
+        Serverville.prototype.getTransientValues = function (id, alias, keys, onSuccess, onError) {
             this.getTransientValuesReq({
                 "id": id,
+                "alias": alias,
                 "keys": keys
             }, onSuccess, onError);
         };
         Serverville.prototype.getAllTransientValuesReq = function (request, onSuccess, onError) {
             this.Transport.callApi("getAllTransientValues", request, onSuccess, onError);
         };
-        Serverville.prototype.getAllTransientValues = function (id, onSuccess, onError) {
+        Serverville.prototype.getAllTransientValues = function (id, alias, onSuccess, onError) {
             this.getAllTransientValuesReq({
-                "id": id
-            }, onSuccess, onError);
-        };
-        Serverville.prototype.getChannelInfoReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("GetChannelInfo", request, onSuccess, onError);
-        };
-        Serverville.prototype.getChannelInfo = function (id, listen_only, onSuccess, onError) {
-            this.getChannelInfoReq({
                 "id": id,
-                "listen_only": listen_only
+                "alias": alias
             }, onSuccess, onError);
         };
         Serverville.prototype.joinChannelReq = function (request, onSuccess, onError) {
             this.Transport.callApi("JoinChannel", request, onSuccess, onError);
         };
-        Serverville.prototype.joinChannel = function (id, listen_only, onSuccess, onError) {
+        Serverville.prototype.joinChannel = function (alias, id, onSuccess, onError) {
             this.joinChannelReq({
-                "id": id,
-                "listen_only": listen_only
+                "alias": alias,
+                "id": id
             }, onSuccess, onError);
         };
         Serverville.prototype.leaveChannelReq = function (request, onSuccess, onError) {
             this.Transport.callApi("LeaveChannel", request, onSuccess, onError);
         };
-        Serverville.prototype.leaveChannel = function (id, onSuccess, onError) {
+        Serverville.prototype.leaveChannel = function (alias, id, onSuccess, onError) {
             this.leaveChannelReq({
+                "alias": alias,
+                "id": id
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.listenToChannelReq = function (request, onSuccess, onError) {
+            this.Transport.callApi("ListenToChannel", request, onSuccess, onError);
+        };
+        Serverville.prototype.listenToChannel = function (id, onSuccess, onError) {
+            this.listenToChannelReq({
+                "id": id
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.stopListenToChannelReq = function (request, onSuccess, onError) {
+            this.Transport.callApi("StopListenToChannel", request, onSuccess, onError);
+        };
+        Serverville.prototype.stopListenToChannel = function (id, onSuccess, onError) {
+            this.stopListenToChannelReq({
                 "id": id
             }, onSuccess, onError);
         };

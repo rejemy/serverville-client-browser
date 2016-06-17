@@ -7,7 +7,7 @@
 namespace sv
 {
 
-	type ServerMessageTypeHandler = (from:string, msg:Object)=>void;
+	type ServerMessageTypeHandler = (from:string, via:string, msg:Object)=>void;
 	
 	export class Serverville
 	{
@@ -24,7 +24,7 @@ namespace sv
 		GlobalErrorHandler:(ev:ErrorReply)=>void;
 		
 		ServerMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler} = {};
-		ServerMessageHandler:(messageType:string, from:string, msg:Object)=>void;
+		ServerMessageHandler:(messageType:string, from:string, via:string, msg:Object)=>void;
 		
 		constructor(url:string)
 		{
@@ -105,16 +105,16 @@ namespace sv
 				this.GlobalErrorHandler(err);
 		}
 		
-		_onServerMessage(messageId:string, from:string, data:Object):void
+		_onServerMessage(messageId:string, from:string, via:string, data:Object):void
 		{
 			var typeHandler:ServerMessageTypeHandler = this.ServerMessageTypeHandlers[messageId];
 			if(typeHandler != null)
 			{
-				typeHandler(from, data);
+				typeHandler(from, via, data);
 			}
 			else if(this.ServerMessageHandler != null)
 			{
-				this.ServerMessageHandler(messageId, from, data);
+				this.ServerMessageHandler(messageId, from, via, data);
 			}
 			else
 			{
@@ -520,10 +520,11 @@ namespace sv
 			);
 		}
 
-		setTransientValue(key:string, value:any, data_type:JsonDataTypeEnum, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setTransientValue(alias:string, key:string, value:any, data_type:JsonDataTypeEnum, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.setTransientValueReq(
 				{
+					"alias":alias,
 					"key":key,
 					"value":value,
 					"data_type":data_type
@@ -543,10 +544,11 @@ namespace sv
 			);
 		}
 
-		setTransientValues(values:Array<SetTransientValueRequest>, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setTransientValues(alias:string, values:Array<SetTransientValueItem>, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.setTransientValuesReq(
 				{
+					"alias":alias,
 					"values":values
 				},
 				onSuccess,
@@ -564,11 +566,12 @@ namespace sv
 			);
 		}
 
-		getTransientValue(id:string, key:string, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getTransientValue(id:string, alias:string, key:string, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getTransientValueReq(
 				{
 					"id":id,
+					"alias":alias,
 					"key":key
 				},
 				onSuccess,
@@ -586,11 +589,12 @@ namespace sv
 			);
 		}
 
-		getTransientValues(id:string, keys:Array<string>, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getTransientValues(id:string, alias:string, keys:Array<string>, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getTransientValuesReq(
 				{
 					"id":id,
+					"alias":alias,
 					"keys":keys
 				},
 				onSuccess,
@@ -608,40 +612,19 @@ namespace sv
 			);
 		}
 
-		getAllTransientValues(id:string, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getAllTransientValues(id:string, alias:string, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getAllTransientValuesReq(
 				{
-					"id":id
-				},
-				onSuccess,
-				onError
-			);
-		}
-
-		getChannelInfoReq(request:JoinChannelRequest, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
-		{
-            
-			this.Transport.callApi("GetChannelInfo",
-				request,
-				onSuccess,
-				onError
-			);
-		}
-
-		getChannelInfo(id:string, listen_only:boolean, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
-		{
-			this.getChannelInfoReq(
-				{
 					"id":id,
-					"listen_only":listen_only
+					"alias":alias
 				},
 				onSuccess,
 				onError
 			);
 		}
 
-		joinChannelReq(request:JoinChannelRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		joinChannelReq(request:JoinChannelRequest, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("JoinChannel",
@@ -651,12 +634,12 @@ namespace sv
 			);
 		}
 
-		joinChannel(id:string, listen_only:boolean, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		joinChannel(alias:string, id:string, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.joinChannelReq(
 				{
-					"id":id,
-					"listen_only":listen_only
+					"alias":alias,
+					"id":id
 				},
 				onSuccess,
 				onError
@@ -673,9 +656,52 @@ namespace sv
 			);
 		}
 
-		leaveChannel(id:string, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		leaveChannel(alias:string, id:string, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.leaveChannelReq(
+				{
+					"alias":alias,
+					"id":id
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		listenToChannelReq(request:ListenToResidentRequest, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.Transport.callApi("ListenToChannel",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		listenToChannel(id:string, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.listenToChannelReq(
+				{
+					"id":id
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		stopListenToChannelReq(request:StopListenToResidentRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.Transport.callApi("StopListenToChannel",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		stopListenToChannel(id:string, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.stopListenToChannelReq(
 				{
 					"id":id
 				},
