@@ -436,12 +436,11 @@ var sv;
         Serverville.prototype.setTransientValueReq = function (request, onSuccess, onError) {
             this.Transport.callApi("SetTransientValue", request, onSuccess, onError);
         };
-        Serverville.prototype.setTransientValue = function (alias, key, value, data_type, onSuccess, onError) {
+        Serverville.prototype.setTransientValue = function (alias, key, value, onSuccess, onError) {
             this.setTransientValueReq({
                 "alias": alias,
                 "key": key,
-                "value": value,
-                "data_type": data_type
+                "value": value
             }, onSuccess, onError);
         };
         Serverville.prototype.setTransientValuesReq = function (request, onSuccess, onError) {
@@ -474,7 +473,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.getAllTransientValuesReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("getAllTransientValues", request, onSuccess, onError);
+            this.Transport.callApi("GetAllTransientValues", request, onSuccess, onError);
         };
         Serverville.prototype.getAllTransientValues = function (id, alias, onSuccess, onError) {
             this.getAllTransientValuesReq({
@@ -500,6 +499,24 @@ var sv;
                 "id": id
             }, onSuccess, onError);
         };
+        Serverville.prototype.addAliasToChannelReq = function (request, onSuccess, onError) {
+            this.Transport.callApi("AddAliasToChannel", request, onSuccess, onError);
+        };
+        Serverville.prototype.addAliasToChannel = function (alias, id, onSuccess, onError) {
+            this.addAliasToChannelReq({
+                "alias": alias,
+                "id": id
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.removeAliasFromChannelReq = function (request, onSuccess, onError) {
+            this.Transport.callApi("RemoveAliasFromChannel", request, onSuccess, onError);
+        };
+        Serverville.prototype.removeAliasFromChannel = function (alias, id, onSuccess, onError) {
+            this.removeAliasFromChannelReq({
+                "alias": alias,
+                "id": id
+            }, onSuccess, onError);
+        };
         Serverville.prototype.listenToChannelReq = function (request, onSuccess, onError) {
             this.Transport.callApi("ListenToChannel", request, onSuccess, onError);
         };
@@ -519,12 +536,11 @@ var sv;
         Serverville.prototype.sendClientMessageReq = function (request, onSuccess, onError) {
             this.Transport.callApi("SendClientMessage", request, onSuccess, onError);
         };
-        Serverville.prototype.sendClientMessage = function (to, message_type, value, data_type, onSuccess, onError) {
+        Serverville.prototype.sendClientMessage = function (to, message_type, value, onSuccess, onError) {
             this.sendClientMessageReq({
                 "to": to,
                 "message_type": message_type,
-                "value": value,
-                "data_type": data_type
+                "value": value
             }, onSuccess, onError);
         };
         return Serverville;

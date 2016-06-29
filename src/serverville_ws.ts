@@ -125,7 +125,7 @@ namespace sv
                 var messageFrom:string = messageStr.substring(split2+1, split3);
                 var messageVia:string = messageStr.substring(split3+1, split4);
                 var messageJson:string = messageStr.substring(split4+1);
-                var messageData:Object = JSON.parse(messageJson);
+                var messageData:Object = messageJson.length ? JSON.parse(messageJson) : null;
                 
 				this.SV._onServerMessage(messageType, messageFrom, messageVia, messageData);
             }

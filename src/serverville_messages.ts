@@ -160,24 +160,16 @@ namespace sv
 		alias:string;
 		key:string;
 		value:any;
-		data_type:JsonDataTypeEnum;
 	}
 
 	export interface EmptyClientReply
 	{
 	}
 
-	export interface SetTransientValueItem
-	{
-		key:string;
-		value:any;
-		data_type:JsonDataTypeEnum;
-	}
-
 	export interface SetTransientValuesRequest
 	{
 		alias:string;
-		values:Array<SetTransientValueItem>;
+		values:{[key:string]:any};
 	}
 
 	export interface GetTransientValueRequest
@@ -187,11 +179,21 @@ namespace sv
 		key:string;
 	}
 
+	export interface TransientDataItemReply
+	{
+		value:any;
+	}
+
 	export interface GetTransientValuesRequest
 	{
 		id:string;
 		alias:string;
 		keys:Array<string>;
+	}
+
+	export interface TransientDataItemsReply
+	{
+		values:{[key:string]:any};
 	}
 
 	export interface GetAllTransientValuesRequest
@@ -240,7 +242,6 @@ namespace sv
 		to:string;
 		message_type:string;
 		value:any;
-		data_type:JsonDataTypeEnum;
 	}
 
 

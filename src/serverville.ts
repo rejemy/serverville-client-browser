@@ -158,7 +158,7 @@ namespace sv
 			);
 		}
         
-		signInReq(request:SignIn, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		signInReq(request:SignIn, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
 			this.Transport.callApi("SignIn",
@@ -168,7 +168,7 @@ namespace sv
 			);
 		}
 
-		signIn(username:string, email:string, password:string, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		signIn(username:string, email:string, password:string, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.signInReq(
 				{
@@ -181,7 +181,7 @@ namespace sv
 			);
 		}
 
-		validateSessionReq(request:ValidateSessionRequest, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		validateSessionReq(request:ValidateSessionRequest, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
 			this.Transport.callApi("ValidateSession",
@@ -191,7 +191,7 @@ namespace sv
 			);
 		}
 
-		validateSession(session_id:string, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		validateSession(session_id:string, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.validateSessionReq(
 				{
@@ -202,7 +202,7 @@ namespace sv
 			);
 		}
 
-		createAnonymousAccountReq(request:CreateAnonymousAccount, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAnonymousAccountReq(request:CreateAnonymousAccount, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
 			this.Transport.callApi("CreateAnonymousAccount",
@@ -212,7 +212,7 @@ namespace sv
 			);
 		}
 
-		createAnonymousAccount(onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAnonymousAccount(onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.createAnonymousAccountReq(
 				{
@@ -223,7 +223,7 @@ namespace sv
 			);
 		}
 
-		createAccountReq(request:CreateAccount, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAccountReq(request:CreateAccount, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
 			this.Transport.callApi("CreateAccount",
@@ -233,7 +233,7 @@ namespace sv
 			);
 		}
 
-		createAccount(username:string, email:string, password:string, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAccount(username:string, email:string, password:string, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.createAccountReq(
 				{
@@ -246,7 +246,7 @@ namespace sv
 			);
 		}
 
-		convertToFullAccountReq(request:CreateAccount, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		convertToFullAccountReq(request:CreateAccount, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
 			this.Transport.callApi("ConvertToFullAccount",
@@ -256,7 +256,7 @@ namespace sv
 			);
 		}
 
-		convertToFullAccount(username:string, email:string, password:string, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		convertToFullAccount(username:string, email:string, password:string, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.convertToFullAccountReq(
 				{
@@ -269,7 +269,7 @@ namespace sv
 			);
 		}
 
-		getUserInfoReq(request:GetUserInfo, onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		getUserInfoReq(request:GetUserInfo, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
 			this.Transport.callApi("GetUserInfo",
@@ -279,7 +279,7 @@ namespace sv
 			);
 		}
 
-		getUserInfo(onSuccess:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		getUserInfo(onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getUserInfoReq(
 				{
@@ -290,7 +290,7 @@ namespace sv
 			);
 		}
 
-		setUserKeyReq(request:SetUserDataRequest, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setUserKeyReq(request:SetUserDataRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("SetUserKey",
@@ -300,7 +300,7 @@ namespace sv
 			);
 		}
 
-		setUserKey(key:string, value:any, data_type:JsonDataTypeEnum, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setUserKey(key:string, value:any, data_type:JsonDataTypeEnum, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.setUserKeyReq(
 				{
@@ -313,7 +313,7 @@ namespace sv
 			);
 		}
 
-		setUserKeysReq(request:UserDataRequestList, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setUserKeysReq(request:UserDataRequestList, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("SetUserKeys",
@@ -323,7 +323,7 @@ namespace sv
 			);
 		}
 
-		setUserKeys(values:Array<SetUserDataRequest>, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setUserKeys(values:Array<SetUserDataRequest>, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.setUserKeysReq(
 				{
@@ -334,7 +334,7 @@ namespace sv
 			);
 		}
 
-		getUserKeyReq(request:KeyRequest, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getUserKeyReq(request:KeyRequest, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("GetUserKey",
@@ -344,7 +344,7 @@ namespace sv
 			);
 		}
 
-		getUserKey(key:string, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getUserKey(key:string, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getUserKeyReq(
 				{
@@ -355,7 +355,7 @@ namespace sv
 			);
 		}
 
-		getUserKeysReq(request:KeysRequest, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getUserKeysReq(request:KeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("GetUserKeys",
@@ -365,7 +365,7 @@ namespace sv
 			);
 		}
 
-		getUserKeys(keys:Array<string>, since:number, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getUserKeys(keys:Array<string>, since:number, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getUserKeysReq(
 				{
@@ -377,7 +377,7 @@ namespace sv
 			);
 		}
 
-		getAllUserKeysReq(request:AllKeysRequest, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getAllUserKeysReq(request:AllKeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("GetAllUserKeys",
@@ -387,7 +387,7 @@ namespace sv
 			);
 		}
 
-		getAllUserKeys(since:number, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getAllUserKeys(since:number, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getAllUserKeysReq(
 				{
@@ -398,7 +398,7 @@ namespace sv
 			);
 		}
 
-		getDataKeyReq(request:GlobalKeyRequest, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getDataKeyReq(request:GlobalKeyRequest, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("GetDataKey",
@@ -408,7 +408,7 @@ namespace sv
 			);
 		}
 
-		getDataKey(id:string, key:string, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getDataKey(id:string, key:string, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getDataKeyReq(
 				{
@@ -420,7 +420,7 @@ namespace sv
 			);
 		}
 
-		getDataKeysReq(request:GlobalKeysRequest, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getDataKeysReq(request:GlobalKeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("GetDataKeys",
@@ -430,7 +430,7 @@ namespace sv
 			);
 		}
 
-		getDataKeys(id:string, keys:Array<string>, since:number, include_deleted:boolean, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getDataKeys(id:string, keys:Array<string>, since:number, include_deleted:boolean, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getDataKeysReq(
 				{
@@ -444,7 +444,7 @@ namespace sv
 			);
 		}
 
-		getAllDataKeysReq(request:AllGlobalKeysRequest, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getAllDataKeysReq(request:AllGlobalKeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("GetAllDataKeys",
@@ -454,7 +454,7 @@ namespace sv
 			);
 		}
 
-		getAllDataKeys(id:string, since:number, include_deleted:boolean, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getAllDataKeys(id:string, since:number, include_deleted:boolean, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getAllDataKeysReq(
 				{
@@ -467,7 +467,7 @@ namespace sv
 			);
 		}
 
-		getKeyDataRecordReq(request:KeyDataRecordRequest, onSuccess:(reply:KeyDataInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		getKeyDataRecordReq(request:KeyDataRecordRequest, onSuccess?:(reply:KeyDataInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("GetKeyDataRecord",
@@ -477,7 +477,7 @@ namespace sv
 			);
 		}
 
-		getKeyDataRecord(id:string, onSuccess:(reply:KeyDataInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		getKeyDataRecord(id:string, onSuccess?:(reply:KeyDataInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getKeyDataRecordReq(
 				{
@@ -488,7 +488,7 @@ namespace sv
 			);
 		}
 
-		setDataKeysReq(request:SetGlobalDataRequest, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setDataKeysReq(request:SetGlobalDataRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("SetDataKeys",
@@ -498,7 +498,7 @@ namespace sv
 			);
 		}
 
-		setDataKeys(id:string, values:Array<SetUserDataRequest>, onSuccess:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setDataKeys(id:string, values:Array<SetUserDataRequest>, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.setDataKeysReq(
 				{
@@ -510,7 +510,7 @@ namespace sv
 			);
 		}
 
-		setTransientValueReq(request:SetTransientValueRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setTransientValueReq(request:SetTransientValueRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("SetTransientValue",
@@ -520,21 +520,20 @@ namespace sv
 			);
 		}
 
-		setTransientValue(alias:string, key:string, value:any, data_type:JsonDataTypeEnum, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setTransientValue(alias:string, key:string, value:any, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.setTransientValueReq(
 				{
 					"alias":alias,
 					"key":key,
-					"value":value,
-					"data_type":data_type
+					"value":value
 				},
 				onSuccess,
 				onError
 			);
 		}
 
-		setTransientValuesReq(request:SetTransientValuesRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setTransientValuesReq(request:SetTransientValuesRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("SetTransientValues",
@@ -544,7 +543,7 @@ namespace sv
 			);
 		}
 
-		setTransientValues(alias:string, values:Array<SetTransientValueItem>, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setTransientValues(alias:string, values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.setTransientValuesReq(
 				{
@@ -556,7 +555,7 @@ namespace sv
 			);
 		}
 
-		getTransientValueReq(request:GetTransientValueRequest, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getTransientValueReq(request:GetTransientValueRequest, onSuccess?:(reply:TransientDataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("GetTransientValue",
@@ -566,7 +565,7 @@ namespace sv
 			);
 		}
 
-		getTransientValue(id:string, alias:string, key:string, onSuccess:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getTransientValue(id:string, alias:string, key:string, onSuccess?:(reply:TransientDataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getTransientValueReq(
 				{
@@ -579,7 +578,7 @@ namespace sv
 			);
 		}
 
-		getTransientValuesReq(request:GetTransientValuesRequest, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getTransientValuesReq(request:GetTransientValuesRequest, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("GetTransientValues",
@@ -589,7 +588,7 @@ namespace sv
 			);
 		}
 
-		getTransientValues(id:string, alias:string, keys:Array<string>, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getTransientValues(id:string, alias:string, keys:Array<string>, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getTransientValuesReq(
 				{
@@ -602,17 +601,17 @@ namespace sv
 			);
 		}
 
-		getAllTransientValuesReq(request:GetAllTransientValuesRequest, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getAllTransientValuesReq(request:GetAllTransientValuesRequest, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("getAllTransientValues",
+			this.Transport.callApi("GetAllTransientValues",
 				request,
 				onSuccess,
 				onError
 			);
 		}
 
-		getAllTransientValues(id:string, alias:string, onSuccess:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getAllTransientValues(id:string, alias:string, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getAllTransientValuesReq(
 				{
@@ -624,7 +623,7 @@ namespace sv
 			);
 		}
 
-		joinChannelReq(request:JoinChannelRequest, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		joinChannelReq(request:JoinChannelRequest, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("JoinChannel",
@@ -634,7 +633,7 @@ namespace sv
 			);
 		}
 
-		joinChannel(alias:string, id:string, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		joinChannel(alias:string, id:string, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.joinChannelReq(
 				{
@@ -646,7 +645,7 @@ namespace sv
 			);
 		}
 
-		leaveChannelReq(request:LeaveChannelRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		leaveChannelReq(request:LeaveChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("LeaveChannel",
@@ -656,7 +655,7 @@ namespace sv
 			);
 		}
 
-		leaveChannel(alias:string, id:string, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		leaveChannel(alias:string, id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.leaveChannelReq(
 				{
@@ -668,7 +667,51 @@ namespace sv
 			);
 		}
 
-		listenToChannelReq(request:ListenToResidentRequest, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		addAliasToChannelReq(request:JoinChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.Transport.callApi("AddAliasToChannel",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		addAliasToChannel(alias:string, id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.addAliasToChannelReq(
+				{
+					"alias":alias,
+					"id":id
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		removeAliasFromChannelReq(request:LeaveChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.Transport.callApi("RemoveAliasFromChannel",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		removeAliasFromChannel(alias:string, id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.removeAliasFromChannelReq(
+				{
+					"alias":alias,
+					"id":id
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		listenToChannelReq(request:ListenToResidentRequest, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("ListenToChannel",
@@ -678,7 +721,7 @@ namespace sv
 			);
 		}
 
-		listenToChannel(id:string, onSuccess:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		listenToChannel(id:string, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.listenToChannelReq(
 				{
@@ -689,7 +732,7 @@ namespace sv
 			);
 		}
 
-		stopListenToChannelReq(request:StopListenToResidentRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		stopListenToChannelReq(request:StopListenToResidentRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("StopListenToChannel",
@@ -699,7 +742,7 @@ namespace sv
 			);
 		}
 
-		stopListenToChannel(id:string, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		stopListenToChannel(id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.stopListenToChannelReq(
 				{
@@ -710,7 +753,7 @@ namespace sv
 			);
 		}
 
-		sendClientMessageReq(request:TransientMessageRequest, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		sendClientMessageReq(request:TransientMessageRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.Transport.callApi("SendClientMessage",
@@ -720,14 +763,13 @@ namespace sv
 			);
 		}
 
-		sendClientMessage(to:string, message_type:string, value:any, data_type:JsonDataTypeEnum, onSuccess:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		sendClientMessage(to:string, message_type:string, value:any, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.sendClientMessageReq(
 				{
 					"to":to,
 					"message_type":message_type,
-					"value":value,
-					"data_type":data_type
+					"value":value
 				},
 				onSuccess,
 				onError

@@ -1,4 +1,4 @@
-		{{MethodName}}Req(request:{{ReqType}}, onSuccess:(reply:{{ReplyType}})=>void, onError?:(reply:ErrorReply)=>void):void
+		{{MethodName}}Req(request:{{ReqType}}, onSuccess?:(reply:{{ReplyType}})=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             {{PreCall}}
 			this.Transport.callApi("{{ApiName}}",
@@ -8,7 +8,7 @@
 			);
 		}
 
-		{{MethodName}}({{Params}}onSuccess:(reply:{{ReplyType}})=>void, onError?:(reply:ErrorReply)=>void):void
+		{{MethodName}}({{Params}}onSuccess?:(reply:{{ReplyType}})=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.{{MethodName}}Req(
 				{
