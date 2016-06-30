@@ -47,9 +47,11 @@ namespace sv
 				else
 				{
                     var error:ErrorReply = JSON.parse(req.response);
-					self._onServerError(error);
+					
 					if(onError)
 						onError(error);
+					else
+						self._onServerError(error);
 				}
 				
 			};

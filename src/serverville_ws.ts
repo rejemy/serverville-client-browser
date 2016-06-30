@@ -63,9 +63,10 @@ namespace sv
             {
                 if(isError)
                 {
-					self._onServerError(<ErrorReply>reply);
                     if(onError)
                         onError(<ErrorReply>reply);
+                    else
+    					self._onServerError(<ErrorReply>reply);                
                 }
                 else
                 {
