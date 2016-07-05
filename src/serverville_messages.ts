@@ -11,12 +11,13 @@ namespace sv
 		password:string;
 	}
 
-	export interface UserAccountInfo
+	export interface SignInReply
 	{
 		user_id:string;
 		username:string;
 		email:string;
 		session_id:string;
+		time:number;
 	}
 
 	export interface ValidateSessionRequest
@@ -35,8 +36,25 @@ namespace sv
 		password:string;
 	}
 
+	export interface EmptyClientRequest
+	{
+	}
+
+	export interface ServerTime
+	{
+		time:number;
+	}
+
 	export interface GetUserInfo
 	{
+	}
+
+	export interface UserAccountInfo
+	{
+		user_id:string;
+		username:string;
+		email:string;
+		session_id:string;
 	}
 
 	export namespace JsonDataType

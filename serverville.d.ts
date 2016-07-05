@@ -14,12 +14,13 @@ declare namespace sv
 		password:string;
 	}
 
-	export interface UserAccountInfo
+	export interface SignInReply
 	{
 		user_id:string;
 		username:string;
 		email:string;
 		session_id:string;
+		time:number;
 	}
 
 	export interface ValidateSessionRequest
@@ -38,8 +39,25 @@ declare namespace sv
 		password:string;
 	}
 
+	export interface EmptyClientRequest
+	{
+	}
+
+	export interface ServerTime
+	{
+		time:number;
+	}
+
 	export interface GetUserInfo
 	{
+	}
+
+	export interface UserAccountInfo
+	{
+		user_id:string;
+		username:string;
+		email:string;
+		session_id:string;
 	}
 
 	export namespace JsonDataType
@@ -256,29 +274,34 @@ declare namespace sv
         ServerURL:string;
 		SessionId:string;
         LogMessagesToConsole:boolean;
+		PingPeriod:number;
 		GlobalErrorHandler:(ev:ErrorReply)=>void;
         ServerMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler};
 		ServerMessageHandler:(messageType:string, from:string, msg:Object)=>void;
 		
         constructor(url:string);
         init(onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void;
+		getServerTime():number;
         loadUserKeyData(onDone?:()=>void):KeyData;
 		loadKeyData(id:string, onDone?:()=>void):KeyData;
 		isSignedIn():boolean;
         signOut():void;
+		shutdown():void;
 		userInfo():UserAccountInfo;
 		
 		apiByName(api:string, request:Object, onSuccess:(reply:Object)=>void, onError?:(reply:ErrorReply)=>void):void;
-		signInReq(request:SignIn, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
-		signIn(username:string, email:string, password:string, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
-		validateSessionReq(request:ValidateSessionRequest, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
-		validateSession(session_id:string, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
-		createAnonymousAccountReq(request:CreateAnonymousAccount, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
-		createAnonymousAccount(onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
-		createAccountReq(request:CreateAccount, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
-		createAccount(username:string, email:string, password:string, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
-		convertToFullAccountReq(request:CreateAccount, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
-		convertToFullAccount(username:string, email:string, password:string, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		signInReq(request:SignIn, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		signIn(username:string, email:string, password:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		validateSessionReq(request:ValidateSessionRequest, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		validateSession(session_id:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		createAnonymousAccountReq(request:CreateAnonymousAccount, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		createAnonymousAccount(onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		createAccountReq(request:CreateAccount, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		createAccount(username:string, email:string, password:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		convertToFullAccountReq(request:CreateAccount, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		convertToFullAccount(username:string, email:string, password:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getTimeReq(request:EmptyClientRequest, onSuccess?:(reply:ServerTime)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getTime(onSuccess?:(reply:ServerTime)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getUserInfoReq(request:GetUserInfo, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getUserInfo(onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setUserKeyReq(request:SetUserDataRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;

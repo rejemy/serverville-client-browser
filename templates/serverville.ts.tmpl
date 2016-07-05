@@ -18,13 +18,20 @@ namespace sv
 		private UserInfo:UserAccountInfo;
 	
         LogMessagesToConsole:boolean = false;
-        
+        PingPeriod:number = 5000;
+
         private Transport:ServervilleTransport;
         
 		GlobalErrorHandler:(ev:ErrorReply)=>void;
 		
 		ServerMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler} = {};
 		ServerMessageHandler:(messageType:string, from:string, via:string, msg:Object)=>void;
+		
+		private LastSend:number = 0;
+		private PingTimer:number = 0;
+
+		private LastServerTime:number = 0;
+		private LastServerTimeAt:number = 0;
 		
 		constructor(url:string)
 		{
@@ -63,6 +70,8 @@ namespace sv
                     function(reply:UserAccountInfo):void
                     {
                         onComplete(reply, null);
+
+						self.startPingHeartbeat();
                     },
                     function(err:ErrorReply):void
                     {
@@ -78,7 +87,28 @@ namespace sv
             
 		}
 	
-		private setUserInfo(userInfo:UserAccountInfo):void
+		private startPingHeartbeat():void
+		{
+			if(this.PingTimer != 0)
+				return;
+
+			var self:Serverville = this;
+
+			this.PingTimer = window.setInterval(function():void
+			{
+				self.ping();
+			}, this.PingPeriod);
+		}
+
+		private stopPingHeartbeat():void
+		{
+			if(this.PingTimer != 0)
+			{
+				window.clearInterval(this.PingTimer);
+			}
+			this.PingTimer = 0;
+		}
+		private setUserInfo(userInfo:SignInReply):void
 		{
 			if(userInfo == null)
 			{
@@ -91,6 +121,8 @@ namespace sv
 				this.UserInfo = userInfo;
 				this.SessionId = userInfo.session_id;
 				localStorage.setItem("SessionId", this.SessionId);
+
+				this.setServerTime(userInfo.time);
 			}
 		}
 		
@@ -103,10 +135,22 @@ namespace sv
 		{
 			if(this.GlobalErrorHandler != null)
 				this.GlobalErrorHandler(err);
+
+			if(err.errorCode == 19) // Session expired
+			{
+				this.shutdown();
+			}
 		}
 		
 		_onServerMessage(messageId:string, from:string, via:string, data:Object):void
 		{
+			if(messageId == "_error")
+			{
+				// Pushed error
+				this._onServerError(<ErrorReply>data);
+				return;
+			}
+
 			var typeHandler:ServerMessageTypeHandler = this.ServerMessageTypeHandlers[messageId];
 			if(typeHandler != null)
 			{
@@ -122,6 +166,44 @@ namespace sv
 			}
 		}
 		
+		_onTransportClosed():void
+		{
+			this.stopPingHeartbeat();
+
+			this._onServerError(makeClientError(-1));
+		}
+
+		private ping():void
+		{
+			if(performance.now() - this.LastSend < 4000)
+				return;
+
+			var self:Serverville = this;
+
+			this.getTime(function(reply:ServerTime):void
+			{
+				self.setServerTime(reply.time);
+			});
+		}
+
+		setServerTime(time:number):void
+		{
+			this.LastServerTime = time;
+			this.LastServerTimeAt = performance.now();
+		}
+
+		getServerTime():number
+		{
+			if(this.LastServerTime == 0)
+				return 0;
+			return (performance.now() - this.LastServerTimeAt) + this.LastServerTime;
+		}
+
+		getLastSendTime():number
+		{
+			return this.LastSend;
+		}
+
 		loadUserKeyData(onDone?:()=>void):KeyData
 		{
 			if(!this.UserInfo)
@@ -147,8 +229,17 @@ namespace sv
         signOut():void
 		{
 			this.setUserInfo(null);
+			
 		}
         
+		shutdown():void
+		{
+			if(this.Transport)
+			{
+				this.Transport.close();
+			}
+		}
+
         apiByName(api:string, request:Object, onSuccess:(reply:Object)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.Transport.callApi(api,
@@ -156,6 +247,8 @@ namespace sv
 				onSuccess,
 				onError
 			);
+
+			this.LastSend = performance.now();
 		}
         
 {{APIs}}

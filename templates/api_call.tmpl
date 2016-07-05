@@ -1,7 +1,7 @@
 		{{MethodName}}Req(request:{{ReqType}}, onSuccess?:(reply:{{ReplyType}})=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             {{PreCall}}
-			this.Transport.callApi("{{ApiName}}",
+			this.apiByName("{{ApiName}}",
 				request,
 				{{SuccessClosure}},
 				onError

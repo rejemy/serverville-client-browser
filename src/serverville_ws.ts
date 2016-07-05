@@ -4,7 +4,7 @@ namespace sv
 {
     type ServervilleWSReplyHandler = (isError:boolean, msg:Object)=>void;
     
-    export class WebSocketTransport
+    export class WebSocketTransport implements ServervilleTransport
 	{
         SV:Serverville;
         
@@ -44,7 +44,7 @@ namespace sv
             {
                 if(onConnected != null)
                 {
-                    onConnected(makeClientError(1));               
+                    onConnected(makeClientError(-2, evt.message));               
                 }
             };
         }
@@ -78,11 +78,18 @@ namespace sv
             this.ReplyCallbacks[messageNum] = callback;
             
 			this.ServerSocket.send(message);
+        }     
+
+        public close():void
+        {
+            if(this.ServerSocket)
+                this.ServerSocket.close();
         }
-        
+
         private onWSClosed(evt:CloseEvent):void
 		{
 			console.log("Web socket closed");
+            this.SV._onTransportClosed();
 		}
 		
 		private onWSMessage(evt:MessageEvent):void

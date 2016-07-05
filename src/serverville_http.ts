@@ -58,7 +58,7 @@ namespace sv
 			
 			req.onerror = function(ev:Event):void
 			{
-                var err:ErrorReply = makeClientError(1);
+                var err:ErrorReply = makeClientError(-2);
                 
 				self._onServerError(err);
 				if(onError)
@@ -67,5 +67,10 @@ namespace sv
 			
 			req.send(body);
         }
+
+		public close():void
+		{
+			
+		}
     }
 }

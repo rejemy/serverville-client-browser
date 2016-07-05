@@ -16,9 +16,18 @@ var sv;
 })(sv || (sv = {}));
 var sv;
 (function (sv) {
-    function makeClientError(code) {
-        var msg = "There was an error";
-        return { errorCode: code, errorMessage: msg, errorDetails: null };
+    function makeClientError(code, details) {
+        if (details === void 0) { details = null; }
+        var msg = "Unknown network error";
+        switch (code) {
+            case -1:
+                msg = "Connection closed";
+                break;
+            case -2:
+                msg = "Network error";
+                break;
+        }
+        return { errorCode: code, errorMessage: msg, errorDetails: details };
     }
     sv.makeClientError = makeClientError;
 })(sv || (sv = {}));
@@ -54,18 +63,21 @@ var sv;
                 }
                 else {
                     var error = JSON.parse(req.response);
-                    self._onServerError(error);
                     if (onError)
                         onError(error);
+                    else
+                        self._onServerError(error);
                 }
             };
             req.onerror = function (ev) {
-                var err = sv_1.makeClientError(1);
+                var err = sv_1.makeClientError(-2);
                 self._onServerError(err);
                 if (onError)
                     onError(err);
             };
             req.send(body);
+        };
+        HttpTransport.prototype.close = function () {
         };
         return HttpTransport;
     }());
@@ -95,7 +107,7 @@ var sv;
             };
             this.ServerSocket.onerror = function (evt) {
                 if (onConnected != null) {
-                    onConnected(sv_2.makeClientError(1));
+                    onConnected(sv_2.makeClientError(-2, evt.message));
                 }
             };
         };
@@ -107,9 +119,10 @@ var sv;
             var self = this.SV;
             var callback = function (isError, reply) {
                 if (isError) {
-                    self._onServerError(reply);
                     if (onError)
                         onError(reply);
+                    else
+                        self._onServerError(reply);
                 }
                 else {
                     if (onSuccess)
@@ -119,8 +132,13 @@ var sv;
             this.ReplyCallbacks[messageNum] = callback;
             this.ServerSocket.send(message);
         };
+        WebSocketTransport.prototype.close = function () {
+            if (this.ServerSocket)
+                this.ServerSocket.close();
+        };
         WebSocketTransport.prototype.onWSClosed = function (evt) {
             console.log("Web socket closed");
+            this.SV._onTransportClosed();
         };
         WebSocketTransport.prototype.onWSMessage = function (evt) {
             var messageStr = evt.data;
@@ -153,7 +171,7 @@ var sv;
                 var messageFrom = messageStr.substring(split2 + 1, split3);
                 var messageVia = messageStr.substring(split3 + 1, split4);
                 var messageJson = messageStr.substring(split4 + 1);
-                var messageData = JSON.parse(messageJson);
+                var messageData = messageJson.length ? JSON.parse(messageJson) : null;
                 this.SV._onServerMessage(messageType, messageFrom, messageVia, messageData);
             }
             else if (messageType == "E" || messageType == "R") {
@@ -190,7 +208,12 @@ var sv;
     var Serverville = (function () {
         function Serverville(url) {
             this.LogMessagesToConsole = false;
+            this.PingPeriod = 5000;
             this.ServerMessageTypeHandlers = {};
+            this.LastSend = 0;
+            this.PingTimer = 0;
+            this.LastServerTime = 0;
+            this.LastServerTimeAt = 0;
             this.ServerURL = url;
             this.SessionId = localStorage.getItem("SessionId");
             if (this.ServerURL.substr(0, 5) == "ws://" || this.ServerURL.substr(0, 6) == "wss://") {
@@ -213,6 +236,7 @@ var sv;
                 if (self.SessionId) {
                     self.validateSession(self.SessionId, function (reply) {
                         onComplete(reply, null);
+                        self.startPingHeartbeat();
                     }, function (err) {
                         self.signOut();
                         onComplete(null, err);
@@ -222,6 +246,20 @@ var sv;
                     onComplete(null, null);
                 }
             });
+        };
+        Serverville.prototype.startPingHeartbeat = function () {
+            if (this.PingTimer != 0)
+                return;
+            var self = this;
+            this.PingTimer = window.setInterval(function () {
+                self.ping();
+            }, this.PingPeriod);
+        };
+        Serverville.prototype.stopPingHeartbeat = function () {
+            if (this.PingTimer != 0) {
+                window.clearInterval(this.PingTimer);
+            }
+            this.PingTimer = 0;
         };
         Serverville.prototype.setUserInfo = function (userInfo) {
             if (userInfo == null) {
@@ -233,6 +271,7 @@ var sv;
                 this.UserInfo = userInfo;
                 this.SessionId = userInfo.session_id;
                 localStorage.setItem("SessionId", this.SessionId);
+                this.setServerTime(userInfo.time);
             }
         };
         Serverville.prototype.userInfo = function () {
@@ -241,8 +280,16 @@ var sv;
         Serverville.prototype._onServerError = function (err) {
             if (this.GlobalErrorHandler != null)
                 this.GlobalErrorHandler(err);
+            if (err.errorCode == 19) {
+                this.shutdown();
+            }
         };
         Serverville.prototype._onServerMessage = function (messageId, from, via, data) {
+            if (messageId == "_error") {
+                // Pushed error
+                this._onServerError(data);
+                return;
+            }
             var typeHandler = this.ServerMessageTypeHandlers[messageId];
             if (typeHandler != null) {
                 typeHandler(from, via, data);
@@ -253,6 +300,30 @@ var sv;
             else {
                 console.log("No handler for message " + messageId);
             }
+        };
+        Serverville.prototype._onTransportClosed = function () {
+            this.stopPingHeartbeat();
+            this._onServerError(sv.makeClientError(-1));
+        };
+        Serverville.prototype.ping = function () {
+            if (performance.now() - this.LastSend < 4000)
+                return;
+            var self = this;
+            this.getTime(function (reply) {
+                self.setServerTime(reply.time);
+            });
+        };
+        Serverville.prototype.setServerTime = function (time) {
+            this.LastServerTime = time;
+            this.LastServerTimeAt = performance.now();
+        };
+        Serverville.prototype.getServerTime = function () {
+            if (this.LastServerTime == 0)
+                return 0;
+            return (performance.now() - this.LastServerTimeAt) + this.LastServerTime;
+        };
+        Serverville.prototype.getLastSendTime = function () {
+            return this.LastSend;
         };
         Serverville.prototype.loadUserKeyData = function (onDone) {
             if (!this.UserInfo)
@@ -272,12 +343,18 @@ var sv;
         Serverville.prototype.signOut = function () {
             this.setUserInfo(null);
         };
+        Serverville.prototype.shutdown = function () {
+            if (this.Transport) {
+                this.Transport.close();
+            }
+        };
         Serverville.prototype.apiByName = function (api, request, onSuccess, onError) {
             this.Transport.callApi(api, request, onSuccess, onError);
+            this.LastSend = performance.now();
         };
         Serverville.prototype.signInReq = function (request, onSuccess, onError) {
             var self = this;
-            this.Transport.callApi("SignIn", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
+            this.apiByName("SignIn", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
                 onSuccess(reply);
             } }, onError);
         };
@@ -290,7 +367,7 @@ var sv;
         };
         Serverville.prototype.validateSessionReq = function (request, onSuccess, onError) {
             var self = this;
-            this.Transport.callApi("ValidateSession", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
+            this.apiByName("ValidateSession", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
                 onSuccess(reply);
             } }, onError);
         };
@@ -301,7 +378,7 @@ var sv;
         };
         Serverville.prototype.createAnonymousAccountReq = function (request, onSuccess, onError) {
             var self = this;
-            this.Transport.callApi("CreateAnonymousAccount", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
+            this.apiByName("CreateAnonymousAccount", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
                 onSuccess(reply);
             } }, onError);
         };
@@ -310,7 +387,7 @@ var sv;
         };
         Serverville.prototype.createAccountReq = function (request, onSuccess, onError) {
             var self = this;
-            this.Transport.callApi("CreateAccount", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
+            this.apiByName("CreateAccount", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
                 onSuccess(reply);
             } }, onError);
         };
@@ -323,7 +400,7 @@ var sv;
         };
         Serverville.prototype.convertToFullAccountReq = function (request, onSuccess, onError) {
             var self = this;
-            this.Transport.callApi("ConvertToFullAccount", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
+            this.apiByName("ConvertToFullAccount", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
                 onSuccess(reply);
             } }, onError);
         };
@@ -334,17 +411,20 @@ var sv;
                 "password": password
             }, onSuccess, onError);
         };
+        Serverville.prototype.getTimeReq = function (request, onSuccess, onError) {
+            this.apiByName("GetTime", request, onSuccess, onError);
+        };
+        Serverville.prototype.getTime = function (onSuccess, onError) {
+            this.getTimeReq({}, onSuccess, onError);
+        };
         Serverville.prototype.getUserInfoReq = function (request, onSuccess, onError) {
-            var self = this;
-            this.Transport.callApi("GetUserInfo", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
-                onSuccess(reply);
-            } }, onError);
+            this.apiByName("GetUserInfo", request, onSuccess, onError);
         };
         Serverville.prototype.getUserInfo = function (onSuccess, onError) {
             this.getUserInfoReq({}, onSuccess, onError);
         };
         Serverville.prototype.setUserKeyReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("SetUserKey", request, onSuccess, onError);
+            this.apiByName("SetUserKey", request, onSuccess, onError);
         };
         Serverville.prototype.setUserKey = function (key, value, data_type, onSuccess, onError) {
             this.setUserKeyReq({
@@ -354,7 +434,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.setUserKeysReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("SetUserKeys", request, onSuccess, onError);
+            this.apiByName("SetUserKeys", request, onSuccess, onError);
         };
         Serverville.prototype.setUserKeys = function (values, onSuccess, onError) {
             this.setUserKeysReq({
@@ -362,7 +442,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.getUserKeyReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("GetUserKey", request, onSuccess, onError);
+            this.apiByName("GetUserKey", request, onSuccess, onError);
         };
         Serverville.prototype.getUserKey = function (key, onSuccess, onError) {
             this.getUserKeyReq({
@@ -370,7 +450,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.getUserKeysReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("GetUserKeys", request, onSuccess, onError);
+            this.apiByName("GetUserKeys", request, onSuccess, onError);
         };
         Serverville.prototype.getUserKeys = function (keys, since, onSuccess, onError) {
             this.getUserKeysReq({
@@ -379,7 +459,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.getAllUserKeysReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("GetAllUserKeys", request, onSuccess, onError);
+            this.apiByName("GetAllUserKeys", request, onSuccess, onError);
         };
         Serverville.prototype.getAllUserKeys = function (since, onSuccess, onError) {
             this.getAllUserKeysReq({
@@ -387,7 +467,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.getDataKeyReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("GetDataKey", request, onSuccess, onError);
+            this.apiByName("GetDataKey", request, onSuccess, onError);
         };
         Serverville.prototype.getDataKey = function (id, key, onSuccess, onError) {
             this.getDataKeyReq({
@@ -396,7 +476,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.getDataKeysReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("GetDataKeys", request, onSuccess, onError);
+            this.apiByName("GetDataKeys", request, onSuccess, onError);
         };
         Serverville.prototype.getDataKeys = function (id, keys, since, include_deleted, onSuccess, onError) {
             this.getDataKeysReq({
@@ -407,7 +487,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.getAllDataKeysReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("GetAllDataKeys", request, onSuccess, onError);
+            this.apiByName("GetAllDataKeys", request, onSuccess, onError);
         };
         Serverville.prototype.getAllDataKeys = function (id, since, include_deleted, onSuccess, onError) {
             this.getAllDataKeysReq({
@@ -417,7 +497,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.getKeyDataRecordReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("GetKeyDataRecord", request, onSuccess, onError);
+            this.apiByName("GetKeyDataRecord", request, onSuccess, onError);
         };
         Serverville.prototype.getKeyDataRecord = function (id, onSuccess, onError) {
             this.getKeyDataRecordReq({
@@ -425,7 +505,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.setDataKeysReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("SetDataKeys", request, onSuccess, onError);
+            this.apiByName("SetDataKeys", request, onSuccess, onError);
         };
         Serverville.prototype.setDataKeys = function (id, values, onSuccess, onError) {
             this.setDataKeysReq({
@@ -434,7 +514,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.setTransientValueReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("SetTransientValue", request, onSuccess, onError);
+            this.apiByName("SetTransientValue", request, onSuccess, onError);
         };
         Serverville.prototype.setTransientValue = function (alias, key, value, onSuccess, onError) {
             this.setTransientValueReq({
@@ -444,7 +524,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.setTransientValuesReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("SetTransientValues", request, onSuccess, onError);
+            this.apiByName("SetTransientValues", request, onSuccess, onError);
         };
         Serverville.prototype.setTransientValues = function (alias, values, onSuccess, onError) {
             this.setTransientValuesReq({
@@ -453,7 +533,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.getTransientValueReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("GetTransientValue", request, onSuccess, onError);
+            this.apiByName("GetTransientValue", request, onSuccess, onError);
         };
         Serverville.prototype.getTransientValue = function (id, alias, key, onSuccess, onError) {
             this.getTransientValueReq({
@@ -463,7 +543,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.getTransientValuesReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("GetTransientValues", request, onSuccess, onError);
+            this.apiByName("GetTransientValues", request, onSuccess, onError);
         };
         Serverville.prototype.getTransientValues = function (id, alias, keys, onSuccess, onError) {
             this.getTransientValuesReq({
@@ -473,7 +553,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.getAllTransientValuesReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("GetAllTransientValues", request, onSuccess, onError);
+            this.apiByName("GetAllTransientValues", request, onSuccess, onError);
         };
         Serverville.prototype.getAllTransientValues = function (id, alias, onSuccess, onError) {
             this.getAllTransientValuesReq({
@@ -482,7 +562,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.joinChannelReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("JoinChannel", request, onSuccess, onError);
+            this.apiByName("JoinChannel", request, onSuccess, onError);
         };
         Serverville.prototype.joinChannel = function (alias, id, onSuccess, onError) {
             this.joinChannelReq({
@@ -491,7 +571,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.leaveChannelReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("LeaveChannel", request, onSuccess, onError);
+            this.apiByName("LeaveChannel", request, onSuccess, onError);
         };
         Serverville.prototype.leaveChannel = function (alias, id, onSuccess, onError) {
             this.leaveChannelReq({
@@ -500,7 +580,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.addAliasToChannelReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("AddAliasToChannel", request, onSuccess, onError);
+            this.apiByName("AddAliasToChannel", request, onSuccess, onError);
         };
         Serverville.prototype.addAliasToChannel = function (alias, id, onSuccess, onError) {
             this.addAliasToChannelReq({
@@ -509,7 +589,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.removeAliasFromChannelReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("RemoveAliasFromChannel", request, onSuccess, onError);
+            this.apiByName("RemoveAliasFromChannel", request, onSuccess, onError);
         };
         Serverville.prototype.removeAliasFromChannel = function (alias, id, onSuccess, onError) {
             this.removeAliasFromChannelReq({
@@ -518,7 +598,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.listenToChannelReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("ListenToChannel", request, onSuccess, onError);
+            this.apiByName("ListenToChannel", request, onSuccess, onError);
         };
         Serverville.prototype.listenToChannel = function (id, onSuccess, onError) {
             this.listenToChannelReq({
@@ -526,7 +606,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.stopListenToChannelReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("StopListenToChannel", request, onSuccess, onError);
+            this.apiByName("StopListenToChannel", request, onSuccess, onError);
         };
         Serverville.prototype.stopListenToChannel = function (id, onSuccess, onError) {
             this.stopListenToChannelReq({
@@ -534,7 +614,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.sendClientMessageReq = function (request, onSuccess, onError) {
-            this.Transport.callApi("SendClientMessage", request, onSuccess, onError);
+            this.apiByName("SendClientMessage", request, onSuccess, onError);
         };
         Serverville.prototype.sendClientMessage = function (to, message_type, value, onSuccess, onError) {
             this.sendClientMessageReq({

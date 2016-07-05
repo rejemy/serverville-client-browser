@@ -18,13 +18,20 @@ namespace sv
 		private UserInfo:UserAccountInfo;
 	
         LogMessagesToConsole:boolean = false;
-        
+        PingPeriod:number = 5000;
+
         private Transport:ServervilleTransport;
         
 		GlobalErrorHandler:(ev:ErrorReply)=>void;
 		
 		ServerMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler} = {};
 		ServerMessageHandler:(messageType:string, from:string, via:string, msg:Object)=>void;
+		
+		private LastSend:number = 0;
+		private PingTimer:number = 0;
+
+		private LastServerTime:number = 0;
+		private LastServerTimeAt:number = 0;
 		
 		constructor(url:string)
 		{
@@ -63,6 +70,8 @@ namespace sv
                     function(reply:UserAccountInfo):void
                     {
                         onComplete(reply, null);
+
+						self.startPingHeartbeat();
                     },
                     function(err:ErrorReply):void
                     {
@@ -78,7 +87,28 @@ namespace sv
             
 		}
 	
-		private setUserInfo(userInfo:UserAccountInfo):void
+		private startPingHeartbeat():void
+		{
+			if(this.PingTimer != 0)
+				return;
+
+			var self:Serverville = this;
+
+			this.PingTimer = window.setInterval(function():void
+			{
+				self.ping();
+			}, this.PingPeriod);
+		}
+
+		private stopPingHeartbeat():void
+		{
+			if(this.PingTimer != 0)
+			{
+				window.clearInterval(this.PingTimer);
+			}
+			this.PingTimer = 0;
+		}
+		private setUserInfo(userInfo:SignInReply):void
 		{
 			if(userInfo == null)
 			{
@@ -91,6 +121,8 @@ namespace sv
 				this.UserInfo = userInfo;
 				this.SessionId = userInfo.session_id;
 				localStorage.setItem("SessionId", this.SessionId);
+
+				this.setServerTime(userInfo.time);
 			}
 		}
 		
@@ -103,10 +135,22 @@ namespace sv
 		{
 			if(this.GlobalErrorHandler != null)
 				this.GlobalErrorHandler(err);
+
+			if(err.errorCode == 19) // Session expired
+			{
+				this.shutdown();
+			}
 		}
 		
 		_onServerMessage(messageId:string, from:string, via:string, data:Object):void
 		{
+			if(messageId == "_error")
+			{
+				// Pushed error
+				this._onServerError(<ErrorReply>data);
+				return;
+			}
+
 			var typeHandler:ServerMessageTypeHandler = this.ServerMessageTypeHandlers[messageId];
 			if(typeHandler != null)
 			{
@@ -122,6 +166,44 @@ namespace sv
 			}
 		}
 		
+		_onTransportClosed():void
+		{
+			this.stopPingHeartbeat();
+
+			this._onServerError(makeClientError(-1));
+		}
+
+		private ping():void
+		{
+			if(performance.now() - this.LastSend < 4000)
+				return;
+
+			var self:Serverville = this;
+
+			this.getTime(function(reply:ServerTime):void
+			{
+				self.setServerTime(reply.time);
+			});
+		}
+
+		setServerTime(time:number):void
+		{
+			this.LastServerTime = time;
+			this.LastServerTimeAt = performance.now();
+		}
+
+		getServerTime():number
+		{
+			if(this.LastServerTime == 0)
+				return 0;
+			return (performance.now() - this.LastServerTimeAt) + this.LastServerTime;
+		}
+
+		getLastSendTime():number
+		{
+			return this.LastSend;
+		}
+
 		loadUserKeyData(onDone?:()=>void):KeyData
 		{
 			if(!this.UserInfo)
@@ -147,8 +229,17 @@ namespace sv
         signOut():void
 		{
 			this.setUserInfo(null);
+			
 		}
         
+		shutdown():void
+		{
+			if(this.Transport)
+			{
+				this.Transport.close();
+			}
+		}
+
         apiByName(api:string, request:Object, onSuccess:(reply:Object)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.Transport.callApi(api,
@@ -156,19 +247,21 @@ namespace sv
 				onSuccess,
 				onError
 			);
+
+			this.LastSend = performance.now();
 		}
         
-		signInReq(request:SignIn, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		signInReq(request:SignIn, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
-			this.Transport.callApi("SignIn",
+			this.apiByName("SignIn",
 				request,
-				function(reply:UserAccountInfo):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
+				function(reply:SignInReply):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
 				onError
 			);
 		}
 
-		signIn(username:string, email:string, password:string, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		signIn(username:string, email:string, password:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.signInReq(
 				{
@@ -181,17 +274,17 @@ namespace sv
 			);
 		}
 
-		validateSessionReq(request:ValidateSessionRequest, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		validateSessionReq(request:ValidateSessionRequest, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
-			this.Transport.callApi("ValidateSession",
+			this.apiByName("ValidateSession",
 				request,
-				function(reply:UserAccountInfo):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
+				function(reply:SignInReply):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
 				onError
 			);
 		}
 
-		validateSession(session_id:string, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		validateSession(session_id:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.validateSessionReq(
 				{
@@ -202,17 +295,17 @@ namespace sv
 			);
 		}
 
-		createAnonymousAccountReq(request:CreateAnonymousAccount, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAnonymousAccountReq(request:CreateAnonymousAccount, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
-			this.Transport.callApi("CreateAnonymousAccount",
+			this.apiByName("CreateAnonymousAccount",
 				request,
-				function(reply:UserAccountInfo):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
+				function(reply:SignInReply):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
 				onError
 			);
 		}
 
-		createAnonymousAccount(onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAnonymousAccount(onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.createAnonymousAccountReq(
 				{
@@ -223,17 +316,17 @@ namespace sv
 			);
 		}
 
-		createAccountReq(request:CreateAccount, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAccountReq(request:CreateAccount, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
-			this.Transport.callApi("CreateAccount",
+			this.apiByName("CreateAccount",
 				request,
-				function(reply:UserAccountInfo):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
+				function(reply:SignInReply):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
 				onError
 			);
 		}
 
-		createAccount(username:string, email:string, password:string, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAccount(username:string, email:string, password:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.createAccountReq(
 				{
@@ -246,17 +339,17 @@ namespace sv
 			);
 		}
 
-		convertToFullAccountReq(request:CreateAccount, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		convertToFullAccountReq(request:CreateAccount, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
-			this.Transport.callApi("ConvertToFullAccount",
+			this.apiByName("ConvertToFullAccount",
 				request,
-				function(reply:UserAccountInfo):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
+				function(reply:SignInReply):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
 				onError
 			);
 		}
 
-		convertToFullAccount(username:string, email:string, password:string, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		convertToFullAccount(username:string, email:string, password:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.convertToFullAccountReq(
 				{
@@ -269,12 +362,33 @@ namespace sv
 			);
 		}
 
+		getTimeReq(request:EmptyClientRequest, onSuccess?:(reply:ServerTime)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("GetTime",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getTime(onSuccess?:(reply:ServerTime)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getTimeReq(
+				{
+
+				},
+				onSuccess,
+				onError
+			);
+		}
+
 		getUserInfoReq(request:GetUserInfo, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-            var self:Serverville = this;
-			this.Transport.callApi("GetUserInfo",
+            
+			this.apiByName("GetUserInfo",
 				request,
-				function(reply:UserAccountInfo):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
+				onSuccess,
 				onError
 			);
 		}
@@ -293,7 +407,7 @@ namespace sv
 		setUserKeyReq(request:SetUserDataRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("SetUserKey",
+			this.apiByName("SetUserKey",
 				request,
 				onSuccess,
 				onError
@@ -316,7 +430,7 @@ namespace sv
 		setUserKeysReq(request:UserDataRequestList, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("SetUserKeys",
+			this.apiByName("SetUserKeys",
 				request,
 				onSuccess,
 				onError
@@ -337,7 +451,7 @@ namespace sv
 		getUserKeyReq(request:KeyRequest, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("GetUserKey",
+			this.apiByName("GetUserKey",
 				request,
 				onSuccess,
 				onError
@@ -358,7 +472,7 @@ namespace sv
 		getUserKeysReq(request:KeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("GetUserKeys",
+			this.apiByName("GetUserKeys",
 				request,
 				onSuccess,
 				onError
@@ -380,7 +494,7 @@ namespace sv
 		getAllUserKeysReq(request:AllKeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("GetAllUserKeys",
+			this.apiByName("GetAllUserKeys",
 				request,
 				onSuccess,
 				onError
@@ -401,7 +515,7 @@ namespace sv
 		getDataKeyReq(request:GlobalKeyRequest, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("GetDataKey",
+			this.apiByName("GetDataKey",
 				request,
 				onSuccess,
 				onError
@@ -423,7 +537,7 @@ namespace sv
 		getDataKeysReq(request:GlobalKeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("GetDataKeys",
+			this.apiByName("GetDataKeys",
 				request,
 				onSuccess,
 				onError
@@ -447,7 +561,7 @@ namespace sv
 		getAllDataKeysReq(request:AllGlobalKeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("GetAllDataKeys",
+			this.apiByName("GetAllDataKeys",
 				request,
 				onSuccess,
 				onError
@@ -470,7 +584,7 @@ namespace sv
 		getKeyDataRecordReq(request:KeyDataRecordRequest, onSuccess?:(reply:KeyDataInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("GetKeyDataRecord",
+			this.apiByName("GetKeyDataRecord",
 				request,
 				onSuccess,
 				onError
@@ -491,7 +605,7 @@ namespace sv
 		setDataKeysReq(request:SetGlobalDataRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("SetDataKeys",
+			this.apiByName("SetDataKeys",
 				request,
 				onSuccess,
 				onError
@@ -513,7 +627,7 @@ namespace sv
 		setTransientValueReq(request:SetTransientValueRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("SetTransientValue",
+			this.apiByName("SetTransientValue",
 				request,
 				onSuccess,
 				onError
@@ -536,7 +650,7 @@ namespace sv
 		setTransientValuesReq(request:SetTransientValuesRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("SetTransientValues",
+			this.apiByName("SetTransientValues",
 				request,
 				onSuccess,
 				onError
@@ -558,7 +672,7 @@ namespace sv
 		getTransientValueReq(request:GetTransientValueRequest, onSuccess?:(reply:TransientDataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("GetTransientValue",
+			this.apiByName("GetTransientValue",
 				request,
 				onSuccess,
 				onError
@@ -581,7 +695,7 @@ namespace sv
 		getTransientValuesReq(request:GetTransientValuesRequest, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("GetTransientValues",
+			this.apiByName("GetTransientValues",
 				request,
 				onSuccess,
 				onError
@@ -604,7 +718,7 @@ namespace sv
 		getAllTransientValuesReq(request:GetAllTransientValuesRequest, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("GetAllTransientValues",
+			this.apiByName("GetAllTransientValues",
 				request,
 				onSuccess,
 				onError
@@ -626,7 +740,7 @@ namespace sv
 		joinChannelReq(request:JoinChannelRequest, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("JoinChannel",
+			this.apiByName("JoinChannel",
 				request,
 				onSuccess,
 				onError
@@ -648,7 +762,7 @@ namespace sv
 		leaveChannelReq(request:LeaveChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("LeaveChannel",
+			this.apiByName("LeaveChannel",
 				request,
 				onSuccess,
 				onError
@@ -670,7 +784,7 @@ namespace sv
 		addAliasToChannelReq(request:JoinChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("AddAliasToChannel",
+			this.apiByName("AddAliasToChannel",
 				request,
 				onSuccess,
 				onError
@@ -692,7 +806,7 @@ namespace sv
 		removeAliasFromChannelReq(request:LeaveChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("RemoveAliasFromChannel",
+			this.apiByName("RemoveAliasFromChannel",
 				request,
 				onSuccess,
 				onError
@@ -714,7 +828,7 @@ namespace sv
 		listenToChannelReq(request:ListenToResidentRequest, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("ListenToChannel",
+			this.apiByName("ListenToChannel",
 				request,
 				onSuccess,
 				onError
@@ -735,7 +849,7 @@ namespace sv
 		stopListenToChannelReq(request:StopListenToResidentRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("StopListenToChannel",
+			this.apiByName("StopListenToChannel",
 				request,
 				onSuccess,
 				onError
@@ -756,7 +870,7 @@ namespace sv
 		sendClientMessageReq(request:TransientMessageRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.Transport.callApi("SendClientMessage",
+			this.apiByName("SendClientMessage",
 				request,
 				onSuccess,
 				onError

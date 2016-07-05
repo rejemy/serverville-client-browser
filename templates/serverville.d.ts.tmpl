@@ -16,16 +16,19 @@ declare namespace sv
         ServerURL:string;
 		SessionId:string;
         LogMessagesToConsole:boolean;
+		PingPeriod:number;
 		GlobalErrorHandler:(ev:ErrorReply)=>void;
         ServerMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler};
 		ServerMessageHandler:(messageType:string, from:string, msg:Object)=>void;
 		
         constructor(url:string);
         init(onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void;
+		getServerTime():number;
         loadUserKeyData(onDone?:()=>void):KeyData;
 		loadKeyData(id:string, onDone?:()=>void):KeyData;
 		isSignedIn():boolean;
         signOut():void;
+		shutdown():void;
 		userInfo():UserAccountInfo;
 		
 		apiByName(api:string, request:Object, onSuccess:(reply:Object)=>void, onError?:(reply:ErrorReply)=>void):void;
