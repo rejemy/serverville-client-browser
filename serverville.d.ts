@@ -30,6 +30,7 @@ declare namespace sv
 
 	export interface CreateAnonymousAccount
 	{
+		invite_code:string;
 	}
 
 	export interface CreateAccount
@@ -37,6 +38,7 @@ declare namespace sv
 		username:string;
 		email:string;
 		password:string;
+		invite_code:string;
 	}
 
 	export interface EmptyClientRequest
@@ -295,11 +297,11 @@ declare namespace sv
 		validateSessionReq(request:ValidateSessionRequest, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		validateSession(session_id:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		createAnonymousAccountReq(request:CreateAnonymousAccount, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		createAnonymousAccount(onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		createAnonymousAccount(invite_code:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		createAccountReq(request:CreateAccount, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		createAccount(username:string, email:string, password:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		createAccount(username:string, email:string, password:string, invite_code:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		convertToFullAccountReq(request:CreateAccount, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		convertToFullAccount(username:string, email:string, password:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		convertToFullAccount(username:string, email:string, password:string, invite_code:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getTimeReq(request:EmptyClientRequest, onSuccess?:(reply:ServerTime)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getTime(onSuccess?:(reply:ServerTime)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getUserInfoReq(request:GetUserInfo, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;

@@ -382,8 +382,10 @@ var sv;
                 onSuccess(reply);
             } }, onError);
         };
-        Serverville.prototype.createAnonymousAccount = function (onSuccess, onError) {
-            this.createAnonymousAccountReq({}, onSuccess, onError);
+        Serverville.prototype.createAnonymousAccount = function (invite_code, onSuccess, onError) {
+            this.createAnonymousAccountReq({
+                "invite_code": invite_code
+            }, onSuccess, onError);
         };
         Serverville.prototype.createAccountReq = function (request, onSuccess, onError) {
             var self = this;
@@ -391,11 +393,12 @@ var sv;
                 onSuccess(reply);
             } }, onError);
         };
-        Serverville.prototype.createAccount = function (username, email, password, onSuccess, onError) {
+        Serverville.prototype.createAccount = function (username, email, password, invite_code, onSuccess, onError) {
             this.createAccountReq({
                 "username": username,
                 "email": email,
-                "password": password
+                "password": password,
+                "invite_code": invite_code
             }, onSuccess, onError);
         };
         Serverville.prototype.convertToFullAccountReq = function (request, onSuccess, onError) {
@@ -404,11 +407,12 @@ var sv;
                 onSuccess(reply);
             } }, onError);
         };
-        Serverville.prototype.convertToFullAccount = function (username, email, password, onSuccess, onError) {
+        Serverville.prototype.convertToFullAccount = function (username, email, password, invite_code, onSuccess, onError) {
             this.convertToFullAccountReq({
                 "username": username,
                 "email": email,
-                "password": password
+                "password": password,
+                "invite_code": invite_code
             }, onSuccess, onError);
         };
         Serverville.prototype.getTimeReq = function (request, onSuccess, onError) {

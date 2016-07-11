@@ -305,11 +305,11 @@ namespace sv
 			);
 		}
 
-		createAnonymousAccount(onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAnonymousAccount(invite_code:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.createAnonymousAccountReq(
 				{
-
+					"invite_code":invite_code
 				},
 				onSuccess,
 				onError
@@ -326,13 +326,14 @@ namespace sv
 			);
 		}
 
-		createAccount(username:string, email:string, password:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAccount(username:string, email:string, password:string, invite_code:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.createAccountReq(
 				{
 					"username":username,
 					"email":email,
-					"password":password
+					"password":password,
+					"invite_code":invite_code
 				},
 				onSuccess,
 				onError
@@ -349,13 +350,14 @@ namespace sv
 			);
 		}
 
-		convertToFullAccount(username:string, email:string, password:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		convertToFullAccount(username:string, email:string, password:string, invite_code:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.convertToFullAccountReq(
 				{
 					"username":username,
 					"email":email,
-					"password":password
+					"password":password,
+					"invite_code":invite_code
 				},
 				onSuccess,
 				onError

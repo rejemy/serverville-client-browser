@@ -27,6 +27,7 @@ namespace sv
 
 	export interface CreateAnonymousAccount
 	{
+		invite_code:string;
 	}
 
 	export interface CreateAccount
@@ -34,6 +35,7 @@ namespace sv
 		username:string;
 		email:string;
 		password:string;
+		invite_code:string;
 	}
 
 	export interface EmptyClientRequest
