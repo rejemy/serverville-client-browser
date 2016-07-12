@@ -29,14 +29,14 @@ namespace sv
             
             this.ServerSocket.onopen = function(evt:Event):void
             {
-                this.Connected = true;
+                self.Connected = true;
                 onConnected(null);
             };
             
             this.ServerSocket.onclose = function(evt:CloseEvent):void
             {
                 self.onWSClosed(evt);
-                this.Connected = false;
+                self.Connected = false;
             }
             
             this.ServerSocket.onmessage = function(evt:MessageEvent):void

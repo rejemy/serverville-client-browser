@@ -98,12 +98,12 @@ var sv;
             this.Connected = false;
             var self = this;
             this.ServerSocket.onopen = function (evt) {
-                this.Connected = true;
+                self.Connected = true;
                 onConnected(null);
             };
             this.ServerSocket.onclose = function (evt) {
                 self.onWSClosed(evt);
-                this.Connected = false;
+                self.Connected = false;
             };
             this.ServerSocket.onmessage = function (evt) {
                 self.onWSMessage(evt);
@@ -452,14 +452,6 @@ var sv;
                 "values": values
             }, onSuccess, onError);
         };
-        Serverville.prototype.getUserKeyReq = function (request, onSuccess, onError) {
-            this.apiByName("GetUserKey", request, onSuccess, onError);
-        };
-        Serverville.prototype.getUserKey = function (key, onSuccess, onError) {
-            this.getUserKeyReq({
-                "key": key
-            }, onSuccess, onError);
-        };
         Serverville.prototype.getUserKeysReq = function (request, onSuccess, onError) {
             this.apiByName("GetUserKeys", request, onSuccess, onError);
         };
@@ -632,6 +624,14 @@ var sv;
                 "to": to,
                 "message_type": message_type,
                 "value": value
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.getUserKeyReq = function (request, onSuccess, onError) {
+            this.apiByName("GetUserKey", request, onSuccess, onError);
+        };
+        Serverville.prototype.getUserKey = function (key, onSuccess, onError) {
+            this.getUserKeyReq({
+                "key": key
             }, onSuccess, onError);
         };
         return Serverville;

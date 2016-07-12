@@ -103,9 +103,10 @@ declare namespace sv
 		values:Array<SetUserDataRequest>;
 	}
 
-	export interface KeyRequest
+	export interface KeysRequest
 	{
-		key:string;
+		keys:Array<string>;
+		since:number;
 	}
 
 	export interface DataItemReply
@@ -117,12 +118,6 @@ declare namespace sv
 		created:number;
 		modified:number;
 		deleted:boolean;
-	}
-
-	export interface KeysRequest
-	{
-		keys:Array<string>;
-		since:number;
 	}
 
 	export interface UserDataReply
@@ -267,6 +262,11 @@ declare namespace sv
 		value:any;
 	}
 
+	export interface KeyRequest
+	{
+		key:string;
+	}
+
 
 
 	type ServerMessageTypeHandler = (from:string, msg:Object)=>void;
@@ -310,8 +310,6 @@ declare namespace sv
 		setUserKey(key:string, value:any, data_type:JsonDataTypeEnum, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setUserKeysReq(request:UserDataRequestList, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setUserKeys(values:Array<SetUserDataRequest>, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		getUserKeyReq(request:KeyRequest, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		getUserKey(key:string, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getUserKeysReq(request:KeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getUserKeys(keys:Array<string>, since:number, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getAllUserKeysReq(request:AllKeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
@@ -350,6 +348,8 @@ declare namespace sv
 		stopListenToChannel(id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		sendClientMessageReq(request:TransientMessageRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		sendClientMessage(to:string, message_type:string, value:any, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getUserKeyReq(request:KeyRequest, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getUserKey(key:string, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 
 
     }

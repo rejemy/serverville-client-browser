@@ -100,9 +100,10 @@ namespace sv
 		values:Array<SetUserDataRequest>;
 	}
 
-	export interface KeyRequest
+	export interface KeysRequest
 	{
-		key:string;
+		keys:Array<string>;
+		since:number;
 	}
 
 	export interface DataItemReply
@@ -114,12 +115,6 @@ namespace sv
 		created:number;
 		modified:number;
 		deleted:boolean;
-	}
-
-	export interface KeysRequest
-	{
-		keys:Array<string>;
-		since:number;
 	}
 
 	export interface UserDataReply
@@ -262,6 +257,11 @@ namespace sv
 		to:string;
 		message_type:string;
 		value:any;
+	}
+
+	export interface KeyRequest
+	{
+		key:string;
 	}
 
 

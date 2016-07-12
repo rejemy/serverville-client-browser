@@ -450,27 +450,6 @@ namespace sv
 			);
 		}
 
-		getUserKeyReq(request:KeyRequest, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
-		{
-            
-			this.apiByName("GetUserKey",
-				request,
-				onSuccess,
-				onError
-			);
-		}
-
-		getUserKey(key:string, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
-		{
-			this.getUserKeyReq(
-				{
-					"key":key
-				},
-				onSuccess,
-				onError
-			);
-		}
-
 		getUserKeysReq(request:KeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
@@ -886,6 +865,27 @@ namespace sv
 					"to":to,
 					"message_type":message_type,
 					"value":value
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		getUserKeyReq(request:KeyRequest, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("GetUserKey",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getUserKey(key:string, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getUserKeyReq(
+				{
+					"key":key
 				},
 				onSuccess,
 				onError
