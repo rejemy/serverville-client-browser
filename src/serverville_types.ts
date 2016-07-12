@@ -29,5 +29,11 @@ namespace sv
         callApi(api:string, request:Object, onSuccess:(reply:Object)=>void, onError:(reply:ErrorReply)=>void):void;
         close():void;
     }
+
+    export interface TransientValuesChangeMessage
+    {
+        members:{[key:string]:any};
+        deleted:string[];
+    }
     
 }
