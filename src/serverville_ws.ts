@@ -7,7 +7,8 @@ namespace sv
     export class WebSocketTransport implements ServervilleTransport
 	{
         SV:Serverville;
-        
+        Connected:boolean;
+
         ServerSocket:WebSocket;
 		MessageSequence:number = 0;
 		ReplyCallbacks:{[id:string]:ServervilleWSReplyHandler} = {};
@@ -22,17 +23,20 @@ namespace sv
             var url:string = this.SV.ServerURL+"/websocket";
             
             this.ServerSocket = new WebSocket(url);
+            this.Connected = false;
             
             var self:WebSocketTransport = this;
             
             this.ServerSocket.onopen = function(evt:Event):void
             {
+                this.Connected = true;
                 onConnected(null);
             };
             
             this.ServerSocket.onclose = function(evt:CloseEvent):void
             {
                 self.onWSClosed(evt);
+                this.Connected = false;
             }
             
             this.ServerSocket.onmessage = function(evt:MessageEvent):void
@@ -88,6 +92,11 @@ namespace sv
 
         private onWSClosed(evt:CloseEvent):void
 		{
+            if(this.Connected == false)
+            {
+                // Ignore close when we never actually got open first
+                return;
+            }
 			console.log("Web socket closed");
             this.SV._onTransportClosed();
 		}
