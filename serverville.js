@@ -95,12 +95,15 @@ var sv;
         WebSocketTransport.prototype.init = function (onConnected) {
             var url = this.SV.ServerURL + "/websocket";
             this.ServerSocket = new WebSocket(url);
+            this.Connected = false;
             var self = this;
             this.ServerSocket.onopen = function (evt) {
+                this.Connected = true;
                 onConnected(null);
             };
             this.ServerSocket.onclose = function (evt) {
                 self.onWSClosed(evt);
+                this.Connected = false;
             };
             this.ServerSocket.onmessage = function (evt) {
                 self.onWSMessage(evt);
@@ -137,6 +140,10 @@ var sv;
                 this.ServerSocket.close();
         };
         WebSocketTransport.prototype.onWSClosed = function (evt) {
+            if (this.Connected == false) {
+                // Ignore close when we never actually got open first
+                return;
+            }
             console.log("Web socket closed");
             this.SV._onTransportClosed();
         };
