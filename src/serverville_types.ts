@@ -32,7 +32,7 @@ namespace sv
 
     export interface TransientValuesChangeMessage
     {
-        members:{[key:string]:any};
+        values:{[key:string]:any};
         deleted:string[];
     }
     

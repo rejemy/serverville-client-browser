@@ -234,6 +234,8 @@ namespace sv
         
 		shutdown():void
 		{
+			this.stopPingHeartbeat();
+
 			if(this.Transport)
 			{
 				this.Transport.close();
@@ -444,6 +446,27 @@ namespace sv
 			this.setUserKeysReq(
 				{
 					"values":values
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		getUserKeyReq(request:KeyRequest, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("GetUserKey",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getUserKey(key:string, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getUserKeyReq(
+				{
+					"key":key
 				},
 				onSuccess,
 				onError
@@ -728,12 +751,13 @@ namespace sv
 			);
 		}
 
-		joinChannel(alias:string, id:string, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		joinChannel(alias:string, id:string, values:{[key:string]:any}, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.joinChannelReq(
 				{
 					"alias":alias,
-					"id":id
+					"id":id,
+					"values":values
 				},
 				onSuccess,
 				onError
@@ -750,12 +774,13 @@ namespace sv
 			);
 		}
 
-		leaveChannel(alias:string, id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		leaveChannel(alias:string, id:string, final_values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.leaveChannelReq(
 				{
 					"alias":alias,
-					"id":id
+					"id":id,
+					"final_values":final_values
 				},
 				onSuccess,
 				onError
@@ -772,12 +797,13 @@ namespace sv
 			);
 		}
 
-		addAliasToChannel(alias:string, id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		addAliasToChannel(alias:string, id:string, values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.addAliasToChannelReq(
 				{
 					"alias":alias,
-					"id":id
+					"id":id,
+					"values":values
 				},
 				onSuccess,
 				onError
@@ -794,12 +820,13 @@ namespace sv
 			);
 		}
 
-		removeAliasFromChannel(alias:string, id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		removeAliasFromChannel(alias:string, id:string, final_values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.removeAliasFromChannelReq(
 				{
 					"alias":alias,
-					"id":id
+					"id":id,
+					"final_values":final_values
 				},
 				onSuccess,
 				onError
@@ -865,27 +892,6 @@ namespace sv
 					"to":to,
 					"message_type":message_type,
 					"value":value
-				},
-				onSuccess,
-				onError
-			);
-		}
-
-		getUserKeyReq(request:KeyRequest, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
-		{
-            
-			this.apiByName("GetUserKey",
-				request,
-				onSuccess,
-				onError
-			);
-		}
-
-		getUserKey(key:string, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
-		{
-			this.getUserKeyReq(
-				{
-					"key":key
 				},
 				onSuccess,
 				onError

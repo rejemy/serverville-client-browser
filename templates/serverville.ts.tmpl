@@ -234,6 +234,8 @@ namespace sv
         
 		shutdown():void
 		{
+			this.stopPingHeartbeat();
+
 			if(this.Transport)
 			{
 				this.Transport.close();

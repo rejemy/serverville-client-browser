@@ -86,6 +86,7 @@ namespace sv
 
         public close():void
         {
+            this.Connected = false;
             if(this.ServerSocket)
                 this.ServerSocket.close();
         }
@@ -98,6 +99,7 @@ namespace sv
                 return;
             }
 			console.log("Web socket closed");
+            this.Connected = false;
             this.SV._onTransportClosed();
 		}
 		

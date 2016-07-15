@@ -136,6 +136,7 @@ var sv;
             this.ServerSocket.send(message);
         };
         WebSocketTransport.prototype.close = function () {
+            this.Connected = false;
             if (this.ServerSocket)
                 this.ServerSocket.close();
         };
@@ -145,6 +146,7 @@ var sv;
                 return;
             }
             console.log("Web socket closed");
+            this.Connected = false;
             this.SV._onTransportClosed();
         };
         WebSocketTransport.prototype.onWSMessage = function (evt) {
@@ -351,6 +353,7 @@ var sv;
             this.setUserInfo(null);
         };
         Serverville.prototype.shutdown = function () {
+            this.stopPingHeartbeat();
             if (this.Transport) {
                 this.Transport.close();
             }
@@ -450,6 +453,14 @@ var sv;
         Serverville.prototype.setUserKeys = function (values, onSuccess, onError) {
             this.setUserKeysReq({
                 "values": values
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.getUserKeyReq = function (request, onSuccess, onError) {
+            this.apiByName("GetUserKey", request, onSuccess, onError);
+        };
+        Serverville.prototype.getUserKey = function (key, onSuccess, onError) {
+            this.getUserKeyReq({
+                "key": key
             }, onSuccess, onError);
         };
         Serverville.prototype.getUserKeysReq = function (request, onSuccess, onError) {
@@ -567,37 +578,41 @@ var sv;
         Serverville.prototype.joinChannelReq = function (request, onSuccess, onError) {
             this.apiByName("JoinChannel", request, onSuccess, onError);
         };
-        Serverville.prototype.joinChannel = function (alias, id, onSuccess, onError) {
+        Serverville.prototype.joinChannel = function (alias, id, values, onSuccess, onError) {
             this.joinChannelReq({
                 "alias": alias,
-                "id": id
+                "id": id,
+                "values": values
             }, onSuccess, onError);
         };
         Serverville.prototype.leaveChannelReq = function (request, onSuccess, onError) {
             this.apiByName("LeaveChannel", request, onSuccess, onError);
         };
-        Serverville.prototype.leaveChannel = function (alias, id, onSuccess, onError) {
+        Serverville.prototype.leaveChannel = function (alias, id, final_values, onSuccess, onError) {
             this.leaveChannelReq({
                 "alias": alias,
-                "id": id
+                "id": id,
+                "final_values": final_values
             }, onSuccess, onError);
         };
         Serverville.prototype.addAliasToChannelReq = function (request, onSuccess, onError) {
             this.apiByName("AddAliasToChannel", request, onSuccess, onError);
         };
-        Serverville.prototype.addAliasToChannel = function (alias, id, onSuccess, onError) {
+        Serverville.prototype.addAliasToChannel = function (alias, id, values, onSuccess, onError) {
             this.addAliasToChannelReq({
                 "alias": alias,
-                "id": id
+                "id": id,
+                "values": values
             }, onSuccess, onError);
         };
         Serverville.prototype.removeAliasFromChannelReq = function (request, onSuccess, onError) {
             this.apiByName("RemoveAliasFromChannel", request, onSuccess, onError);
         };
-        Serverville.prototype.removeAliasFromChannel = function (alias, id, onSuccess, onError) {
+        Serverville.prototype.removeAliasFromChannel = function (alias, id, final_values, onSuccess, onError) {
             this.removeAliasFromChannelReq({
                 "alias": alias,
-                "id": id
+                "id": id,
+                "final_values": final_values
             }, onSuccess, onError);
         };
         Serverville.prototype.listenToChannelReq = function (request, onSuccess, onError) {
@@ -624,14 +639,6 @@ var sv;
                 "to": to,
                 "message_type": message_type,
                 "value": value
-            }, onSuccess, onError);
-        };
-        Serverville.prototype.getUserKeyReq = function (request, onSuccess, onError) {
-            this.apiByName("GetUserKey", request, onSuccess, onError);
-        };
-        Serverville.prototype.getUserKey = function (key, onSuccess, onError) {
-            this.getUserKeyReq({
-                "key": key
             }, onSuccess, onError);
         };
         return Serverville;

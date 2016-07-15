@@ -100,10 +100,9 @@ namespace sv
 		values:Array<SetUserDataRequest>;
 	}
 
-	export interface KeysRequest
+	export interface KeyRequest
 	{
-		keys:Array<string>;
-		since:number;
+		key:string;
 	}
 
 	export interface DataItemReply
@@ -115,6 +114,12 @@ namespace sv
 		created:number;
 		modified:number;
 		deleted:boolean;
+	}
+
+	export interface KeysRequest
+	{
+		keys:Array<string>;
+		since:number;
 	}
 
 	export interface UserDataReply
@@ -221,6 +226,7 @@ namespace sv
 	{
 		alias:string;
 		id:string;
+		values:{[key:string]:any};
 	}
 
 	export interface ChannelMemberInfo
@@ -240,6 +246,7 @@ namespace sv
 	{
 		alias:string;
 		id:string;
+		final_values:{[key:string]:any};
 	}
 
 	export interface ListenToResidentRequest
@@ -257,11 +264,6 @@ namespace sv
 		to:string;
 		message_type:string;
 		value:any;
-	}
-
-	export interface KeyRequest
-	{
-		key:string;
 	}
 
 
