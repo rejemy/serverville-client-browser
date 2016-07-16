@@ -262,6 +262,7 @@ namespace sv
 	export interface TransientMessageRequest
 	{
 		to:string;
+		alias:string;
 		message_type:string;
 		value:any;
 	}

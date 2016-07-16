@@ -35,5 +35,11 @@ namespace sv
         values:{[key:string]:any};
         deleted:string[];
     }
+
+    export interface TransientClientMessage
+    {
+        message_type:string;
+        value:any;
+    }
     
 }

@@ -885,11 +885,12 @@ namespace sv
 			);
 		}
 
-		sendClientMessage(to:string, message_type:string, value:any, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		sendClientMessage(to:string, alias:string, message_type:string, value:any, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.sendClientMessageReq(
 				{
 					"to":to,
+					"alias":alias,
 					"message_type":message_type,
 					"value":value
 				},

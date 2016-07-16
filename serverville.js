@@ -634,9 +634,10 @@ var sv;
         Serverville.prototype.sendClientMessageReq = function (request, onSuccess, onError) {
             this.apiByName("SendClientMessage", request, onSuccess, onError);
         };
-        Serverville.prototype.sendClientMessage = function (to, message_type, value, onSuccess, onError) {
+        Serverville.prototype.sendClientMessage = function (to, alias, message_type, value, onSuccess, onError) {
             this.sendClientMessageReq({
                 "to": to,
+                "alias": alias,
                 "message_type": message_type,
                 "value": value
             }, onSuccess, onError);
