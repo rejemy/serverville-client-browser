@@ -17,6 +17,7 @@ namespace sv
 		username:string;
 		email:string;
 		session_id:string;
+		admin_level:number;
 		time:number;
 	}
 
@@ -57,6 +58,7 @@ namespace sv
 		username:string;
 		email:string;
 		session_id:string;
+		admin_level:number;
 	}
 
 	export namespace JsonDataType
