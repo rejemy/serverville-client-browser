@@ -272,6 +272,22 @@ declare namespace sv
 		value:any;
 	}
 
+	export interface CurrencyBalanceRequest
+	{
+		currency_id:string;
+	}
+
+	export interface CurrencyBalanceReply
+	{
+		currency_id:string;
+		balance:number;
+	}
+
+	export interface CurrencyBalancesReply
+	{
+		balances:{[key:string]:number};
+	}
+
 
 
 	type ServerMessageTypeHandler = (from:string, msg:Object)=>void;
@@ -355,6 +371,10 @@ declare namespace sv
 		stopListenToChannel(id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		sendClientMessageReq(request:TransientMessageRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		sendClientMessage(to:string, alias:string, message_type:string, value:any, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getCurrencyBalanceReq(request:CurrencyBalanceRequest, onSuccess?:(reply:CurrencyBalanceReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getCurrencyBalance(currency_id:string, onSuccess?:(reply:CurrencyBalanceReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getCurrencyBalancesReq(request:EmptyClientRequest, onSuccess?:(reply:CurrencyBalancesReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getCurrencyBalances(onSuccess?:(reply:CurrencyBalancesReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 
 
     }

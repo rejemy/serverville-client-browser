@@ -899,6 +899,48 @@ namespace sv
 			);
 		}
 
+		getCurrencyBalanceReq(request:CurrencyBalanceRequest, onSuccess?:(reply:CurrencyBalanceReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("GetCurrencyBalance",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getCurrencyBalance(currency_id:string, onSuccess?:(reply:CurrencyBalanceReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getCurrencyBalanceReq(
+				{
+					"currency_id":currency_id
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		getCurrencyBalancesReq(request:EmptyClientRequest, onSuccess?:(reply:CurrencyBalancesReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("GetCurrencyBalances",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getCurrencyBalances(onSuccess?:(reply:CurrencyBalancesReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getCurrencyBalancesReq(
+				{
+
+				},
+				onSuccess,
+				onError
+			);
+		}
+
 
         
         

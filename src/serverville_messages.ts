@@ -269,6 +269,22 @@ namespace sv
 		value:any;
 	}
 
+	export interface CurrencyBalanceRequest
+	{
+		currency_id:string;
+	}
+
+	export interface CurrencyBalanceReply
+	{
+		currency_id:string;
+		balance:number;
+	}
+
+	export interface CurrencyBalancesReply
+	{
+		balances:{[key:string]:number};
+	}
+
 
 
 }

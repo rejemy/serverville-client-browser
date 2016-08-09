@@ -642,6 +642,20 @@ var sv;
                 "value": value
             }, onSuccess, onError);
         };
+        Serverville.prototype.getCurrencyBalanceReq = function (request, onSuccess, onError) {
+            this.apiByName("GetCurrencyBalance", request, onSuccess, onError);
+        };
+        Serverville.prototype.getCurrencyBalance = function (currency_id, onSuccess, onError) {
+            this.getCurrencyBalanceReq({
+                "currency_id": currency_id
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.getCurrencyBalancesReq = function (request, onSuccess, onError) {
+            this.apiByName("GetCurrencyBalances", request, onSuccess, onError);
+        };
+        Serverville.prototype.getCurrencyBalances = function (onSuccess, onError) {
+            this.getCurrencyBalancesReq({}, onSuccess, onError);
+        };
         return Serverville;
     }());
     sv.Serverville = Serverville;
