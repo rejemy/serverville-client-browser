@@ -12,6 +12,7 @@ namespace sv
 	export class Serverville
 	{
 		ServerURL:string;
+		ServerHost:string;
 
 		SessionId:string;
         
@@ -37,6 +38,10 @@ namespace sv
 		{
 			this.ServerURL = url;
 			this.SessionId = localStorage.getItem("SessionId");
+			var protocolLen:number = this.ServerURL.indexOf("://");
+			if(protocolLen < 2)
+				throw "Malformed url: "+url;
+            this.ServerHost = this.ServerURL.substring(protocolLen+3);
             
             if(this.ServerURL.substr(0, 5) == "ws://" || this.ServerURL.substr(0, 6) == "wss://")
             {
@@ -307,11 +312,13 @@ namespace sv
 			);
 		}
 
-		createAnonymousAccount(invite_code:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAnonymousAccount(invite_code:string, language:string, country:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.createAnonymousAccountReq(
 				{
-					"invite_code":invite_code
+					"invite_code":invite_code,
+					"language":language,
+					"country":country
 				},
 				onSuccess,
 				onError
@@ -328,14 +335,16 @@ namespace sv
 			);
 		}
 
-		createAccount(username:string, email:string, password:string, invite_code:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		createAccount(username:string, email:string, password:string, invite_code:string, language:string, country:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.createAccountReq(
 				{
 					"username":username,
 					"email":email,
 					"password":password,
-					"invite_code":invite_code
+					"invite_code":invite_code,
+					"language":language,
+					"country":country
 				},
 				onSuccess,
 				onError
@@ -352,14 +361,16 @@ namespace sv
 			);
 		}
 
-		convertToFullAccount(username:string, email:string, password:string, invite_code:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		convertToFullAccount(username:string, email:string, password:string, invite_code:string, language:string, country:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.convertToFullAccountReq(
 				{
 					"username":username,
 					"email":email,
 					"password":password,
-					"invite_code":invite_code
+					"invite_code":invite_code,
+					"language":language,
+					"country":country
 				},
 				onSuccess,
 				onError
@@ -402,6 +413,28 @@ namespace sv
 			this.getUserInfoReq(
 				{
 
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		setLocaleReq(request:SetLocaleRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("SetLocale",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		setLocale(country:string, language:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.setLocaleReq(
+				{
+					"country":country,
+					"language":language
 				},
 				onSuccess,
 				onError
@@ -935,6 +968,70 @@ namespace sv
 			this.getCurrencyBalancesReq(
 				{
 
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		getProductsReq(request:GetProductsRequest, onSuccess?:(reply:ProductInfoList)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("GetProducts",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getProducts(onSuccess?:(reply:ProductInfoList)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getProductsReq(
+				{
+
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		getProductReq(request:GetProductRequest, onSuccess?:(reply:ProductInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("GetProduct",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getProduct(product_id:string, onSuccess?:(reply:ProductInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getProductReq(
+				{
+					"product_id":product_id
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		stripeCheckoutReq(request:StripeCheckoutRequest, onSuccess?:(reply:ProductPurchasedReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("stripeCheckout",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		stripeCheckout(stripe_token:string, product_id:string, onSuccess?:(reply:ProductPurchasedReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.stripeCheckoutReq(
+				{
+					"stripe_token":stripe_token,
+					"product_id":product_id
 				},
 				onSuccess,
 				onError

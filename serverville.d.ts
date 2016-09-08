@@ -21,6 +21,8 @@ declare namespace sv
 		email:string;
 		session_id:string;
 		admin_level:number;
+		language:string;
+		country:string;
 		time:number;
 	}
 
@@ -32,6 +34,8 @@ declare namespace sv
 	export interface CreateAnonymousAccount
 	{
 		invite_code:string;
+		language:string;
+		country:string;
 	}
 
 	export interface CreateAccount
@@ -40,6 +44,8 @@ declare namespace sv
 		email:string;
 		password:string;
 		invite_code:string;
+		language:string;
+		country:string;
 	}
 
 	export interface EmptyClientRequest
@@ -62,6 +68,16 @@ declare namespace sv
 		email:string;
 		session_id:string;
 		admin_level:number;
+	}
+
+	export interface SetLocaleRequest
+	{
+		country:string;
+		language:string;
+	}
+
+	export interface EmptyClientReply
+	{
 	}
 
 	export namespace JsonDataType
@@ -187,10 +203,6 @@ declare namespace sv
 		value:any;
 	}
 
-	export interface EmptyClientReply
-	{
-	}
-
 	export interface SetTransientValuesRequest
 	{
 		alias:string;
@@ -288,6 +300,43 @@ declare namespace sv
 		balances:{[key:string]:number};
 	}
 
+	export interface GetProductsRequest
+	{
+	}
+
+	export interface ProductInfo
+	{
+		id:string;
+		name:string;
+		description:string;
+		image_url:string;
+		price:number;
+		display_price:string;
+	}
+
+	export interface ProductInfoList
+	{
+		products:Array<ProductInfo>;
+	}
+
+	export interface GetProductRequest
+	{
+		product_id:string;
+	}
+
+	export interface StripeCheckoutRequest
+	{
+		stripe_token:string;
+		product_id:string;
+	}
+
+	export interface ProductPurchasedReply
+	{
+		product_id:string;
+		price:number;
+		currencies:{[key:string]:number};
+	}
+
 
 
 	type ServerMessageTypeHandler = (from:string, msg:Object)=>void;
@@ -295,6 +344,7 @@ declare namespace sv
     export class Serverville
 	{
         ServerURL:string;
+		ServerHost:string;
 		SessionId:string;
         LogMessagesToConsole:boolean;
 		PingPeriod:number;
@@ -318,15 +368,17 @@ declare namespace sv
 		validateSessionReq(request:ValidateSessionRequest, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		validateSession(session_id:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		createAnonymousAccountReq(request:CreateAnonymousAccount, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		createAnonymousAccount(invite_code:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		createAnonymousAccount(invite_code:string, language:string, country:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		createAccountReq(request:CreateAccount, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		createAccount(username:string, email:string, password:string, invite_code:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		createAccount(username:string, email:string, password:string, invite_code:string, language:string, country:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		convertToFullAccountReq(request:CreateAccount, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		convertToFullAccount(username:string, email:string, password:string, invite_code:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		convertToFullAccount(username:string, email:string, password:string, invite_code:string, language:string, country:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getTimeReq(request:EmptyClientRequest, onSuccess?:(reply:ServerTime)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getTime(onSuccess?:(reply:ServerTime)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getUserInfoReq(request:GetUserInfo, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getUserInfo(onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		setLocaleReq(request:SetLocaleRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		setLocale(country:string, language:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setUserKeyReq(request:SetUserDataRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setUserKey(key:string, value:any, data_type:JsonDataTypeEnum, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setUserKeysReq(request:UserDataRequestList, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
@@ -375,6 +427,12 @@ declare namespace sv
 		getCurrencyBalance(currency_id:string, onSuccess?:(reply:CurrencyBalanceReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getCurrencyBalancesReq(request:EmptyClientRequest, onSuccess?:(reply:CurrencyBalancesReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getCurrencyBalances(onSuccess?:(reply:CurrencyBalancesReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getProductsReq(request:GetProductsRequest, onSuccess?:(reply:ProductInfoList)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getProducts(onSuccess?:(reply:ProductInfoList)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getProductReq(request:GetProductRequest, onSuccess?:(reply:ProductInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getProduct(product_id:string, onSuccess?:(reply:ProductInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		stripeCheckoutReq(request:StripeCheckoutRequest, onSuccess?:(reply:ProductPurchasedReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		stripeCheckout(stripe_token:string, product_id:string, onSuccess?:(reply:ProductPurchasedReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 
 
     }

@@ -6,6 +6,7 @@
 	},
 	"files": [
 		"src/serverville.ts",
-        "src/serverville_keydata.ts"
+        "src/serverville_keydata.ts",
+        "src/serverville_stripe.ts"
 	]
 }

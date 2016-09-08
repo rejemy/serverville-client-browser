@@ -18,6 +18,8 @@ namespace sv
 		email:string;
 		session_id:string;
 		admin_level:number;
+		language:string;
+		country:string;
 		time:number;
 	}
 
@@ -29,6 +31,8 @@ namespace sv
 	export interface CreateAnonymousAccount
 	{
 		invite_code:string;
+		language:string;
+		country:string;
 	}
 
 	export interface CreateAccount
@@ -37,6 +41,8 @@ namespace sv
 		email:string;
 		password:string;
 		invite_code:string;
+		language:string;
+		country:string;
 	}
 
 	export interface EmptyClientRequest
@@ -59,6 +65,16 @@ namespace sv
 		email:string;
 		session_id:string;
 		admin_level:number;
+	}
+
+	export interface SetLocaleRequest
+	{
+		country:string;
+		language:string;
+	}
+
+	export interface EmptyClientReply
+	{
 	}
 
 	export namespace JsonDataType
@@ -184,10 +200,6 @@ namespace sv
 		value:any;
 	}
 
-	export interface EmptyClientReply
-	{
-	}
-
 	export interface SetTransientValuesRequest
 	{
 		alias:string;
@@ -283,6 +295,43 @@ namespace sv
 	export interface CurrencyBalancesReply
 	{
 		balances:{[key:string]:number};
+	}
+
+	export interface GetProductsRequest
+	{
+	}
+
+	export interface ProductInfo
+	{
+		id:string;
+		name:string;
+		description:string;
+		image_url:string;
+		price:number;
+		display_price:string;
+	}
+
+	export interface ProductInfoList
+	{
+		products:Array<ProductInfo>;
+	}
+
+	export interface GetProductRequest
+	{
+		product_id:string;
+	}
+
+	export interface StripeCheckoutRequest
+	{
+		stripe_token:string;
+		product_id:string;
+	}
+
+	export interface ProductPurchasedReply
+	{
+		product_id:string;
+		price:number;
+		currencies:{[key:string]:number};
 	}
 
 

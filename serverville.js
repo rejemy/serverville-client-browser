@@ -225,6 +225,10 @@ var sv;
             this.LastServerTimeAt = 0;
             this.ServerURL = url;
             this.SessionId = localStorage.getItem("SessionId");
+            var protocolLen = this.ServerURL.indexOf("://");
+            if (protocolLen < 2)
+                throw "Malformed url: " + url;
+            this.ServerHost = this.ServerURL.substring(protocolLen + 3);
             if (this.ServerURL.substr(0, 5) == "ws://" || this.ServerURL.substr(0, 6) == "wss://") {
                 this.Transport = new sv.WebSocketTransport(this);
             }
@@ -392,9 +396,11 @@ var sv;
                 onSuccess(reply);
             } }, onError);
         };
-        Serverville.prototype.createAnonymousAccount = function (invite_code, onSuccess, onError) {
+        Serverville.prototype.createAnonymousAccount = function (invite_code, language, country, onSuccess, onError) {
             this.createAnonymousAccountReq({
-                "invite_code": invite_code
+                "invite_code": invite_code,
+                "language": language,
+                "country": country
             }, onSuccess, onError);
         };
         Serverville.prototype.createAccountReq = function (request, onSuccess, onError) {
@@ -403,12 +409,14 @@ var sv;
                 onSuccess(reply);
             } }, onError);
         };
-        Serverville.prototype.createAccount = function (username, email, password, invite_code, onSuccess, onError) {
+        Serverville.prototype.createAccount = function (username, email, password, invite_code, language, country, onSuccess, onError) {
             this.createAccountReq({
                 "username": username,
                 "email": email,
                 "password": password,
-                "invite_code": invite_code
+                "invite_code": invite_code,
+                "language": language,
+                "country": country
             }, onSuccess, onError);
         };
         Serverville.prototype.convertToFullAccountReq = function (request, onSuccess, onError) {
@@ -417,12 +425,14 @@ var sv;
                 onSuccess(reply);
             } }, onError);
         };
-        Serverville.prototype.convertToFullAccount = function (username, email, password, invite_code, onSuccess, onError) {
+        Serverville.prototype.convertToFullAccount = function (username, email, password, invite_code, language, country, onSuccess, onError) {
             this.convertToFullAccountReq({
                 "username": username,
                 "email": email,
                 "password": password,
-                "invite_code": invite_code
+                "invite_code": invite_code,
+                "language": language,
+                "country": country
             }, onSuccess, onError);
         };
         Serverville.prototype.getTimeReq = function (request, onSuccess, onError) {
@@ -436,6 +446,15 @@ var sv;
         };
         Serverville.prototype.getUserInfo = function (onSuccess, onError) {
             this.getUserInfoReq({}, onSuccess, onError);
+        };
+        Serverville.prototype.setLocaleReq = function (request, onSuccess, onError) {
+            this.apiByName("SetLocale", request, onSuccess, onError);
+        };
+        Serverville.prototype.setLocale = function (country, language, onSuccess, onError) {
+            this.setLocaleReq({
+                "country": country,
+                "language": language
+            }, onSuccess, onError);
         };
         Serverville.prototype.setUserKeyReq = function (request, onSuccess, onError) {
             this.apiByName("SetUserKey", request, onSuccess, onError);
@@ -656,6 +675,29 @@ var sv;
         Serverville.prototype.getCurrencyBalances = function (onSuccess, onError) {
             this.getCurrencyBalancesReq({}, onSuccess, onError);
         };
+        Serverville.prototype.getProductsReq = function (request, onSuccess, onError) {
+            this.apiByName("GetProducts", request, onSuccess, onError);
+        };
+        Serverville.prototype.getProducts = function (onSuccess, onError) {
+            this.getProductsReq({}, onSuccess, onError);
+        };
+        Serverville.prototype.getProductReq = function (request, onSuccess, onError) {
+            this.apiByName("GetProduct", request, onSuccess, onError);
+        };
+        Serverville.prototype.getProduct = function (product_id, onSuccess, onError) {
+            this.getProductReq({
+                "product_id": product_id
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.stripeCheckoutReq = function (request, onSuccess, onError) {
+            this.apiByName("stripeCheckout", request, onSuccess, onError);
+        };
+        Serverville.prototype.stripeCheckout = function (stripe_token, product_id, onSuccess, onError) {
+            this.stripeCheckoutReq({
+                "stripe_token": stripe_token,
+                "product_id": product_id
+            }, onSuccess, onError);
+        };
         return Serverville;
     }());
     sv.Serverville = Serverville;
@@ -783,5 +825,42 @@ var sv;
         return KeyData;
     }());
     sv.KeyData = KeyData;
+})(sv || (sv = {}));
+var sv;
+(function (sv) {
+    function addStripeButton(parent, server, key, productId, pennyPrice, name, desc, imgUrl) {
+        var form = makeStripeButton(server, key, productId, pennyPrice, name, desc, imgUrl);
+        parent.appendChild(form);
+    }
+    sv.addStripeButton = addStripeButton;
+    function makeStripeButton(server, key, productId, pennyPrice, name, desc, imgUrl) {
+        var form = document.createElement("form");
+        form.method = "POST";
+        form.action = "https://" + server.ServerHost + "/form/stripeCheckout";
+        var sessionToken = document.createElement("input");
+        sessionToken.type = "hidden";
+        sessionToken.name = "session_id";
+        sessionToken.value = server.SessionId;
+        form.appendChild(sessionToken);
+        var product = document.createElement("input");
+        product.type = "hidden";
+        product.name = "product_id";
+        product.value = productId;
+        form.appendChild(product);
+        var script = document.createElement("script");
+        script.classList.add("stripe-button");
+        script.setAttribute("data-key", key);
+        script.setAttribute("data-amount", String(pennyPrice));
+        script.setAttribute("data-name", name);
+        script.setAttribute("data-description", desc);
+        script.setAttribute("data-image", imgUrl);
+        script.setAttribute("data-locale", "auto");
+        script.setAttribute("data-zip-code", "true");
+        script.setAttribute("data-billing-address", "true");
+        script.src = "https://checkout.stripe.com/checkout.js";
+        form.appendChild(script);
+        return form;
+    }
+    sv.makeStripeButton = makeStripeButton;
 })(sv || (sv = {}));
 //# sourceMappingURL=serverville.js.map

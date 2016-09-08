@@ -12,6 +12,7 @@ namespace sv
 	export class Serverville
 	{
 		ServerURL:string;
+		ServerHost:string;
 
 		SessionId:string;
         
@@ -37,6 +38,10 @@ namespace sv
 		{
 			this.ServerURL = url;
 			this.SessionId = localStorage.getItem("SessionId");
+			var protocolLen:number = this.ServerURL.indexOf("://");
+			if(protocolLen < 2)
+				throw "Malformed url: "+url;
+            this.ServerHost = this.ServerURL.substring(protocolLen+3);
             
             if(this.ServerURL.substr(0, 5) == "ws://" || this.ServerURL.substr(0, 6) == "wss://")
             {
