@@ -87,9 +87,9 @@ namespace sv
 			this.server.getAllDataKeys(this.id, this.most_recent, true,
 				function(reply:UserDataReply):void
 				{
-					for(var key in self.data_info)
+					for(var key in reply.values)
 					{
-						var dataInfo:DataItemReply = self.data_info[key];
+						var dataInfo:DataItemReply = reply.values[key];
 						if(dataInfo.deleted)
 						{
 							delete self.data[key];
