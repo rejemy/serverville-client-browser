@@ -441,6 +441,27 @@ namespace sv
 			);
 		}
 
+		getUserDataComboReq(request:GetUserDataComboRequest, onSuccess?:(reply:GetUserDataComboReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("GetUserDataCombo",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getUserDataCombo(since:number, onSuccess?:(reply:GetUserDataComboReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getUserDataComboReq(
+				{
+					"since":since
+				},
+				onSuccess,
+				onError
+			);
+		}
+
 		setUserKeyReq(request:SetUserDataRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
@@ -633,6 +654,28 @@ namespace sv
 			this.getKeyDataRecordReq(
 				{
 					"id":id
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		getKeyDataRecordsReq(request:KeyDataRecordsRequest, onSuccess?:(reply:KeyDataRecords)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("GetKeyDataRecords",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getKeyDataRecords(type:string, parent:string, onSuccess?:(reply:KeyDataRecords)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getKeyDataRecordsReq(
+				{
+					"type":type,
+					"parent":parent
 				},
 				onSuccess,
 				onError

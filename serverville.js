@@ -181,6 +181,10 @@ var sv;
                 var messageVia = messageStr.substring(split3 + 1, split4);
                 var messageJson = messageStr.substring(split4 + 1);
                 var messageData = messageJson.length ? JSON.parse(messageJson) : null;
+                if (messageFrom.length == 0)
+                    messageFrom = null;
+                if (messageVia.length == 0)
+                    messageVia = null;
                 this.SV._onServerMessage(messageType, messageFrom, messageVia, messageData);
             }
             else if (messageType == "E" || messageType == "R") {
@@ -456,6 +460,14 @@ var sv;
                 "language": language
             }, onSuccess, onError);
         };
+        Serverville.prototype.getUserDataComboReq = function (request, onSuccess, onError) {
+            this.apiByName("GetUserDataCombo", request, onSuccess, onError);
+        };
+        Serverville.prototype.getUserDataCombo = function (since, onSuccess, onError) {
+            this.getUserDataComboReq({
+                "since": since
+            }, onSuccess, onError);
+        };
         Serverville.prototype.setUserKeyReq = function (request, onSuccess, onError) {
             this.apiByName("SetUserKey", request, onSuccess, onError);
         };
@@ -535,6 +547,15 @@ var sv;
         Serverville.prototype.getKeyDataRecord = function (id, onSuccess, onError) {
             this.getKeyDataRecordReq({
                 "id": id
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.getKeyDataRecordsReq = function (request, onSuccess, onError) {
+            this.apiByName("GetKeyDataRecords", request, onSuccess, onError);
+        };
+        Serverville.prototype.getKeyDataRecords = function (type, parent, onSuccess, onError) {
+            this.getKeyDataRecordsReq({
+                "type": type,
+                "parent": parent
             }, onSuccess, onError);
         };
         Serverville.prototype.setDataKeysReq = function (request, onSuccess, onError) {
@@ -754,8 +775,8 @@ var sv;
         KeyData.prototype.refresh = function (onDone) {
             var self = this;
             this.server.getAllDataKeys(this.id, this.most_recent, true, function (reply) {
-                for (var key in self.data_info) {
-                    var dataInfo = self.data_info[key];
+                for (var key in reply.values) {
+                    var dataInfo = reply.values[key];
                     if (dataInfo.deleted) {
                         delete self.data[key];
                         delete self.data_info[key];
@@ -828,12 +849,7 @@ var sv;
 })(sv || (sv = {}));
 var sv;
 (function (sv) {
-    function addStripeButton(parent, server, key, productId, pennyPrice, name, desc, imgUrl) {
-        var form = makeStripeButton(server, key, productId, pennyPrice, name, desc, imgUrl);
-        parent.appendChild(form);
-    }
-    sv.addStripeButton = addStripeButton;
-    function makeStripeButton(server, key, productId, pennyPrice, name, desc, imgUrl) {
+    function makeStripeButton(server, apiKey, product, successUrl, failUrl) {
         var form = document.createElement("form");
         form.method = "POST";
         form.action = "https://" + server.ServerHost + "/form/stripeCheckout";
@@ -842,18 +858,28 @@ var sv;
         sessionToken.name = "session_id";
         sessionToken.value = server.SessionId;
         form.appendChild(sessionToken);
-        var product = document.createElement("input");
-        product.type = "hidden";
-        product.name = "product_id";
-        product.value = productId;
-        form.appendChild(product);
+        var productInput = document.createElement("input");
+        productInput.type = "hidden";
+        productInput.name = "product_id";
+        productInput.value = product.id;
+        form.appendChild(productInput);
+        var successUrlInput = document.createElement("input");
+        successUrlInput.type = "hidden";
+        successUrlInput.name = "success_redirect_url";
+        successUrlInput.value = successUrl;
+        form.appendChild(successUrlInput);
+        var failUrlInput = document.createElement("input");
+        failUrlInput.type = "hidden";
+        failUrlInput.name = "fail_redirect_url";
+        failUrlInput.value = failUrl;
+        form.appendChild(failUrlInput);
         var script = document.createElement("script");
         script.classList.add("stripe-button");
-        script.setAttribute("data-key", key);
-        script.setAttribute("data-amount", String(pennyPrice));
-        script.setAttribute("data-name", name);
-        script.setAttribute("data-description", desc);
-        script.setAttribute("data-image", imgUrl);
+        script.setAttribute("data-key", apiKey);
+        script.setAttribute("data-amount", String(product.price));
+        script.setAttribute("data-name", product.name);
+        script.setAttribute("data-description", product.description);
+        script.setAttribute("data-image", product.image_url);
         script.setAttribute("data-locale", "auto");
         script.setAttribute("data-zip-code", "true");
         script.setAttribute("data-billing-address", "true");

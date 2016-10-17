@@ -80,6 +80,11 @@ declare namespace sv
 	{
 	}
 
+	export interface GetUserDataComboRequest
+	{
+		since:number;
+	}
+
 	export namespace JsonDataType
 	{
 		export const NULL:JsonDataTypeEnum;
@@ -104,6 +109,23 @@ declare namespace sv
 		"bytes" |
 		"object";
 
+	export interface DataItemReply
+	{
+		id:string;
+		key:string;
+		value:any;
+		data_type:JsonDataTypeEnum;
+		created:number;
+		modified:number;
+		deleted:boolean;
+	}
+
+	export interface GetUserDataComboReply
+	{
+		values:{[key:string]:DataItemReply};
+		balances:{[key:string]:number};
+	}
+
 	export interface SetUserDataRequest
 	{
 		key:string;
@@ -124,17 +146,6 @@ declare namespace sv
 	export interface KeyRequest
 	{
 		key:string;
-	}
-
-	export interface DataItemReply
-	{
-		id:string;
-		key:string;
-		value:any;
-		data_type:JsonDataTypeEnum;
-		created:number;
-		modified:number;
-		deleted:boolean;
 	}
 
 	export interface KeysRequest
@@ -188,6 +199,17 @@ declare namespace sv
 		version:number;
 		created:number;
 		modified:number;
+	}
+
+	export interface KeyDataRecordsRequest
+	{
+		type:string;
+		parent:string;
+	}
+
+	export interface KeyDataRecords
+	{
+		records:Array<KeyDataInfo>;
 	}
 
 	export interface SetGlobalDataRequest
@@ -379,6 +401,8 @@ declare namespace sv
 		getUserInfo(onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setLocaleReq(request:SetLocaleRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setLocale(country:string, language:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getUserDataComboReq(request:GetUserDataComboRequest, onSuccess?:(reply:GetUserDataComboReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getUserDataCombo(since:number, onSuccess?:(reply:GetUserDataComboReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setUserKeyReq(request:SetUserDataRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setUserKey(key:string, value:any, data_type:JsonDataTypeEnum, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setUserKeysReq(request:UserDataRequestList, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
@@ -397,6 +421,8 @@ declare namespace sv
 		getAllDataKeys(id:string, since:number, include_deleted:boolean, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getKeyDataRecordReq(request:KeyDataRecordRequest, onSuccess?:(reply:KeyDataInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getKeyDataRecord(id:string, onSuccess?:(reply:KeyDataInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getKeyDataRecordsReq(request:KeyDataRecordsRequest, onSuccess?:(reply:KeyDataRecords)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getKeyDataRecords(type:string, parent:string, onSuccess?:(reply:KeyDataRecords)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setDataKeysReq(request:SetGlobalDataRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setDataKeys(id:string, values:Array<SetUserDataRequest>, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setTransientValueReq(request:SetTransientValueRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;

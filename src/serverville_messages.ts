@@ -77,6 +77,11 @@ namespace sv
 	{
 	}
 
+	export interface GetUserDataComboRequest
+	{
+		since:number;
+	}
+
 	export namespace JsonDataType
 	{
 		export const NULL:JsonDataTypeEnum = "null";
@@ -101,6 +106,23 @@ namespace sv
 		"bytes" |
 		"object";
 
+	export interface DataItemReply
+	{
+		id:string;
+		key:string;
+		value:any;
+		data_type:JsonDataTypeEnum;
+		created:number;
+		modified:number;
+		deleted:boolean;
+	}
+
+	export interface GetUserDataComboReply
+	{
+		values:{[key:string]:DataItemReply};
+		balances:{[key:string]:number};
+	}
+
 	export interface SetUserDataRequest
 	{
 		key:string;
@@ -121,17 +143,6 @@ namespace sv
 	export interface KeyRequest
 	{
 		key:string;
-	}
-
-	export interface DataItemReply
-	{
-		id:string;
-		key:string;
-		value:any;
-		data_type:JsonDataTypeEnum;
-		created:number;
-		modified:number;
-		deleted:boolean;
 	}
 
 	export interface KeysRequest
@@ -185,6 +196,17 @@ namespace sv
 		version:number;
 		created:number;
 		modified:number;
+	}
+
+	export interface KeyDataRecordsRequest
+	{
+		type:string;
+		parent:string;
+	}
+
+	export interface KeyDataRecords
+	{
+		records:Array<KeyDataInfo>;
 	}
 
 	export interface SetGlobalDataRequest
