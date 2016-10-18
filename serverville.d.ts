@@ -334,6 +334,7 @@ declare namespace sv
 		image_url:string;
 		price:number;
 		display_price:string;
+		currency:string;
 	}
 
 	export interface ProductInfoList
