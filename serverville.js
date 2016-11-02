@@ -71,9 +71,10 @@ var sv;
             };
             req.onerror = function (ev) {
                 var err = sv_1.makeClientError(-2);
-                self._onServerError(err);
                 if (onError)
                     onError(err);
+                else
+                    self._onServerError(err);
             };
             req.send(body);
         };
