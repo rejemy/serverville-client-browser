@@ -9,7 +9,7 @@ declare namespace sv
    
 {{Types}}
 
-	type ServerMessageTypeHandler = (from:string, msg:Object)=>void;
+	type ServerMessageTypeHandler = (message:UserMessageNotification)=>void;
 	
     export class Serverville
 	{
@@ -19,8 +19,14 @@ declare namespace sv
         LogMessagesToConsole:boolean;
 		PingPeriod:number;
 		GlobalErrorHandler:(ev:ErrorReply)=>void;
-        ServerMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler};
-		ServerMessageHandler:(messageType:string, from:string, msg:Object)=>void;
+
+        UserMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler};
+		UserMessageHandler:(message:UserMessageNotification)=>void;
+		
+		ResidentJoinedHandler:(notification:ResidentJoinedNotification)=>void;
+		ResidentLeftHandler:(notification:ResidentLeftNotification)=>void;
+		ResidentEventHandler:(notification:ResidentEventNotification)=>void;
+		ResidentStateUpdateHandler:(notification:ResidentStateUpdateNotification)=>void;
 		
         constructor(url:string);
         init(onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void;

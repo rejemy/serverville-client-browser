@@ -193,7 +193,7 @@ declare namespace sv
 	export interface KeyDataInfo
 	{
 		id:string;
-		type:string;
+		record_type:string;
 		owner:string;
 		parent:string;
 		version:number;
@@ -203,7 +203,7 @@ declare namespace sv
 
 	export interface KeyDataRecordsRequest
 	{
-		type:string;
+		record_type:string;
 		parent:string;
 	}
 
@@ -218,23 +218,57 @@ declare namespace sv
 		values:Array<SetUserDataRequest>;
 	}
 
+	export interface CreateResidentRequest
+	{
+		resident_type:string;
+		values:{[key:string]:any};
+	}
+
+	export interface CreateResidentReply
+	{
+		resident_id:string;
+	}
+
+	export interface DeleteResidentRequest
+	{
+		resident_id:string;
+		final_values:{[key:string]:any};
+	}
+
+	export interface RemoveResidentFromAllChannelsRequest
+	{
+		resident_id:string;
+		final_values:{[key:string]:any};
+	}
+
 	export interface SetTransientValueRequest
 	{
-		alias:string;
+		resident_id:string;
 		key:string;
 		value:any;
 	}
 
 	export interface SetTransientValuesRequest
 	{
-		alias:string;
+		resident_id:string;
 		values:{[key:string]:any};
+	}
+
+	export interface DeleteTransientValueRequest
+	{
+		resident_id:string;
+		key:string;
+	}
+
+	export interface DeleteTransientValuesRequest
+	{
+		resident_id:string;
+		values:Array<string>;
 	}
 
 	export interface GetTransientValueRequest
 	{
-		id:string;
-		alias:string;
+		resident_id:string;
 		key:string;
 	}
 
@@ -245,8 +279,7 @@ declare namespace sv
 
 	export interface GetTransientValuesRequest
 	{
-		id:string;
-		alias:string;
+		resident_id:string;
 		keys:Array<string>;
 	}
 
@@ -257,53 +290,78 @@ declare namespace sv
 
 	export interface GetAllTransientValuesRequest
 	{
-		id:string;
-		alias:string;
+		resident_id:string;
 	}
 
 	export interface JoinChannelRequest
 	{
-		alias:string;
-		id:string;
+		channel_id:string;
+		resident_id:string;
 		values:{[key:string]:any};
 	}
 
 	export interface ChannelMemberInfo
 	{
-		id:string;
+		resident_id:string;
 		values:{[key:string]:any};
 	}
 
 	export interface ChannelInfo
 	{
-		id:string;
+		channel_id:string;
 		values:{[key:string]:any};
 		members:{[key:string]:ChannelMemberInfo};
 	}
 
 	export interface LeaveChannelRequest
 	{
-		alias:string;
-		id:string;
+		channel_id:string;
+		resident_id:string;
 		final_values:{[key:string]:any};
 	}
 
-	export interface ListenToResidentRequest
+	export interface ListenToChannelRequest
 	{
-		id:string;
+		channel_id:string;
 	}
 
-	export interface StopListenToResidentRequest
+	export interface StopListenToChannelRequest
 	{
-		id:string;
+		channel_id:string;
 	}
 
-	export interface TransientMessageRequest
+	export interface TriggerResidentEventRequest
+	{
+		resident_id:string;
+		event_type:string;
+		event_data:string;
+	}
+
+	export interface SendUserMessageRequest
 	{
 		to:string;
-		alias:string;
 		message_type:string;
-		value:any;
+		message:string;
+		guaranteed:boolean;
+	}
+
+	export interface UserMessageNotification
+	{
+		id:string;
+		message_type:string;
+		message:string;
+		from_id:string;
+		sender_is_user:boolean;
+	}
+
+	export interface UserMessageList
+	{
+		messages:Array<UserMessageNotification>;
+	}
+
+	export interface ClearMessageRequest
+	{
+		id:string;
 	}
 
 	export interface CurrencyBalanceRequest
@@ -360,9 +418,50 @@ declare namespace sv
 		currencies:{[key:string]:number};
 	}
 
+	export interface ResidentJoinedNotification
+	{
+		resident_id:string;
+		via_channel:string;
+		values:{[key:string]:any};
+	}
+
+	export interface ResidentStateUpdateNotification
+	{
+		resident_id:string;
+		via_channel:string;
+		values:{[key:string]:any};
+		deleted:Array<string>;
+	}
+
+	export interface ResidentLeftNotification
+	{
+		resident_id:string;
+		via_channel:string;
+		final_values:{[key:string]:any};
+	}
+
+	export interface ResidentEventNotification
+	{
+		resident_id:string;
+		via_channel:string;
+		event_type:string;
+		event_data:string;
+	}
+
+	export interface PendingNotification
+	{
+		notification_type:string;
+		body:string;
+	}
+
+	export interface PendingNotificationList
+	{
+		notifications:Array<PendingNotification>;
+	}
 
 
-	type ServerMessageTypeHandler = (from:string, msg:Object)=>void;
+
+	type ServerMessageTypeHandler = (message:UserMessageNotification)=>void;
 	
     export class Serverville
 	{
@@ -372,8 +471,14 @@ declare namespace sv
         LogMessagesToConsole:boolean;
 		PingPeriod:number;
 		GlobalErrorHandler:(ev:ErrorReply)=>void;
-        ServerMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler};
-		ServerMessageHandler:(messageType:string, from:string, msg:Object)=>void;
+
+        UserMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler};
+		UserMessageHandler:(message:UserMessageNotification)=>void;
+		
+		ResidentJoinedHandler:(notification:ResidentJoinedNotification)=>void;
+		ResidentLeftHandler:(notification:ResidentLeftNotification)=>void;
+		ResidentEventHandler:(notification:ResidentEventNotification)=>void;
+		ResidentStateUpdateHandler:(notification:ResidentStateUpdateNotification)=>void;
 		
         constructor(url:string);
         init(onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void;
@@ -423,33 +528,49 @@ declare namespace sv
 		getKeyDataRecordReq(request:KeyDataRecordRequest, onSuccess?:(reply:KeyDataInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getKeyDataRecord(id:string, onSuccess?:(reply:KeyDataInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getKeyDataRecordsReq(request:KeyDataRecordsRequest, onSuccess?:(reply:KeyDataRecords)=>void, onError?:(reply:ErrorReply)=>void):void;
-		getKeyDataRecords(type:string, parent:string, onSuccess?:(reply:KeyDataRecords)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getKeyDataRecords(record_type:string, parent:string, onSuccess?:(reply:KeyDataRecords)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setDataKeysReq(request:SetGlobalDataRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setDataKeys(id:string, values:Array<SetUserDataRequest>, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		createResidentReq(request:CreateResidentRequest, onSuccess?:(reply:CreateResidentReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		createResident(resident_type:string, values:{[key:string]:any}, onSuccess?:(reply:CreateResidentReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		deleteResidentReq(request:DeleteResidentRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		deleteResident(resident_id:string, final_values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		removeResidentFromAllChannelsReq(request:RemoveResidentFromAllChannelsRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		removeResidentFromAllChannels(resident_id:string, final_values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setTransientValueReq(request:SetTransientValueRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		setTransientValue(alias:string, key:string, value:any, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		setTransientValue(resident_id:string, key:string, value:any, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setTransientValuesReq(request:SetTransientValuesRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		setTransientValues(alias:string, values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		setTransientValues(resident_id:string, values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		deleteTransientValueReq(request:DeleteTransientValueRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		deleteTransientValue(resident_id:string, key:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		deleteTransientValuesReq(request:DeleteTransientValuesRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		deleteTransientValues(resident_id:string, values:Array<string>, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getTransientValueReq(request:GetTransientValueRequest, onSuccess?:(reply:TransientDataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		getTransientValue(id:string, alias:string, key:string, onSuccess?:(reply:TransientDataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getTransientValue(resident_id:string, key:string, onSuccess?:(reply:TransientDataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getTransientValuesReq(request:GetTransientValuesRequest, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		getTransientValues(id:string, alias:string, keys:Array<string>, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getTransientValues(resident_id:string, keys:Array<string>, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getAllTransientValuesReq(request:GetAllTransientValuesRequest, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		getAllTransientValues(id:string, alias:string, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getAllTransientValues(resident_id:string, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		joinChannelReq(request:JoinChannelRequest, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
-		joinChannel(alias:string, id:string, values:{[key:string]:any}, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		joinChannel(channel_id:string, resident_id:string, values:{[key:string]:any}, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		leaveChannelReq(request:LeaveChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		leaveChannel(alias:string, id:string, final_values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		addAliasToChannelReq(request:JoinChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		addAliasToChannel(alias:string, id:string, values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		removeAliasFromChannelReq(request:LeaveChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		removeAliasFromChannel(alias:string, id:string, final_values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		listenToChannelReq(request:ListenToResidentRequest, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
-		listenToChannel(id:string, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
-		stopListenToChannelReq(request:StopListenToResidentRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		stopListenToChannel(id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		sendClientMessageReq(request:TransientMessageRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		sendClientMessage(to:string, alias:string, message_type:string, value:any, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		leaveChannel(channel_id:string, resident_id:string, final_values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		addResidentToChannelReq(request:JoinChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		addResidentToChannel(channel_id:string, resident_id:string, values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		removeResidentFromChannelReq(request:LeaveChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		removeResidentFromChannel(channel_id:string, resident_id:string, final_values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		listenToChannelReq(request:ListenToChannelRequest, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		listenToChannel(channel_id:string, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		stopListenToChannelReq(request:StopListenToChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		stopListenToChannel(channel_id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		triggerResidentEventReq(request:TriggerResidentEventRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		triggerResidentEvent(resident_id:string, event_type:string, event_data:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		sendUserMessageReq(request:SendUserMessageRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		sendUserMessage(to:string, message_type:string, message:string, guaranteed:boolean, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getPendingMessagesReq(request:EmptyClientRequest, onSuccess?:(reply:UserMessageList)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getPendingMessages(onSuccess?:(reply:UserMessageList)=>void, onError?:(reply:ErrorReply)=>void):void;
+		clearPendingMessageReq(request:ClearMessageRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		clearPendingMessage(id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getCurrencyBalanceReq(request:CurrencyBalanceRequest, onSuccess?:(reply:CurrencyBalanceReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getCurrencyBalance(currency_id:string, onSuccess?:(reply:CurrencyBalanceReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getCurrencyBalancesReq(request:EmptyClientRequest, onSuccess?:(reply:CurrencyBalancesReply)=>void, onError?:(reply:ErrorReply)=>void):void;

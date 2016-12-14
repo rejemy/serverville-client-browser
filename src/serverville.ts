@@ -7,7 +7,7 @@
 namespace sv
 {
 
-	type ServerMessageTypeHandler = (from:string, via:string, msg:Object)=>void;
+	type ServerMessageTypeHandler = (message:UserMessageNotification)=>void;
 	
 	export class Serverville
 	{
@@ -25,8 +25,13 @@ namespace sv
         
 		GlobalErrorHandler:(ev:ErrorReply)=>void;
 		
-		ServerMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler} = {};
-		ServerMessageHandler:(messageType:string, from:string, via:string, msg:Object)=>void;
+		UserMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler} = {};
+		UserMessageHandler:(message:UserMessageNotification)=>void;
+		
+		ResidentJoinedHandler:(notification:ResidentJoinedNotification)=>void;
+		ResidentLeftHandler:(notification:ResidentLeftNotification)=>void;
+		ResidentEventHandler:(notification:ResidentEventNotification)=>void;
+		ResidentStateUpdateHandler:(notification:ResidentStateUpdateNotification)=>void;
 		
 		private LastSend:number = 0;
 		private PingTimer:number = 0;
@@ -113,6 +118,7 @@ namespace sv
 			}
 			this.PingTimer = 0;
 		}
+
 		private setUserInfo(userInfo:SignInReply):void
 		{
 			if(userInfo == null)
@@ -147,27 +153,56 @@ namespace sv
 			}
 		}
 		
-		_onServerMessage(messageId:string, from:string, via:string, data:Object):void
+		_onServerNotification(notificationType:string, notificationJson:string):void
 		{
-			if(messageId == "_error")
-			{
-				// Pushed error
-				this._onServerError(<ErrorReply>data);
-				return;
-			}
+			var notification:Object = JSON.parse(notificationJson);
 
-			var typeHandler:ServerMessageTypeHandler = this.ServerMessageTypeHandlers[messageId];
+			switch(notificationType)
+			{
+				case "error":
+					// Pushed error
+					this._onServerError(<ErrorReply>notification);
+					return;
+				case "msg":
+					// User message
+					this._onUserMessage(<UserMessageNotification>notification);
+					return;
+				case "resJoined":
+					if(this.ResidentJoinedHandler)
+						this.ResidentJoinedHandler(<ResidentJoinedNotification>notification);
+					return;
+				case "resLeft":
+					if(this.ResidentLeftHandler)
+						this.ResidentLeftHandler(<ResidentLeftNotification>notification);
+					return;
+				case "resEvent":
+					if(this.ResidentEventHandler)
+						this.ResidentEventHandler(<ResidentEventNotification>notification);
+					return;
+				case "resUpdate":
+					if(this.ResidentStateUpdateHandler)
+						this.ResidentStateUpdateHandler(<ResidentStateUpdateNotification>notification);
+					return;
+				default:
+					console.log("Unknown type of server notification: "+notificationType);
+					return;
+			}	
+		}
+
+		_onUserMessage(message:UserMessageNotification):void
+		{
+			var typeHandler:ServerMessageTypeHandler = this.UserMessageTypeHandlers[message.message_type];
 			if(typeHandler != null)
 			{
-				typeHandler(from, via, data);
+				typeHandler(message);
 			}
-			else if(this.ServerMessageHandler != null)
+			else if(this.UserMessageHandler != null)
 			{
-				this.ServerMessageHandler(messageId, from, via, data);
+				this.UserMessageHandler(message);
 			}
 			else
 			{
-				console.log("No handler for message "+messageId);
+				console.log("No handler for message "+message.message_type);
 			}
 		}
 		
@@ -670,11 +705,11 @@ namespace sv
 			);
 		}
 
-		getKeyDataRecords(type:string, parent:string, onSuccess?:(reply:KeyDataRecords)=>void, onError?:(reply:ErrorReply)=>void):void
+		getKeyDataRecords(record_type:string, parent:string, onSuccess?:(reply:KeyDataRecords)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getKeyDataRecordsReq(
 				{
-					"type":type,
+					"record_type":record_type,
 					"parent":parent
 				},
 				onSuccess,
@@ -704,6 +739,72 @@ namespace sv
 			);
 		}
 
+		createResidentReq(request:CreateResidentRequest, onSuccess?:(reply:CreateResidentReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("CreateResident",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		createResident(resident_type:string, values:{[key:string]:any}, onSuccess?:(reply:CreateResidentReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.createResidentReq(
+				{
+					"resident_type":resident_type,
+					"values":values
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		deleteResidentReq(request:DeleteResidentRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("DeleteResident",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		deleteResident(resident_id:string, final_values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.deleteResidentReq(
+				{
+					"resident_id":resident_id,
+					"final_values":final_values
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		removeResidentFromAllChannelsReq(request:RemoveResidentFromAllChannelsRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("RemoveResidentFromAllChannels",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		removeResidentFromAllChannels(resident_id:string, final_values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.removeResidentFromAllChannelsReq(
+				{
+					"resident_id":resident_id,
+					"final_values":final_values
+				},
+				onSuccess,
+				onError
+			);
+		}
+
 		setTransientValueReq(request:SetTransientValueRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
@@ -714,11 +815,11 @@ namespace sv
 			);
 		}
 
-		setTransientValue(alias:string, key:string, value:any, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setTransientValue(resident_id:string, key:string, value:any, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.setTransientValueReq(
 				{
-					"alias":alias,
+					"resident_id":resident_id,
 					"key":key,
 					"value":value
 				},
@@ -737,11 +838,55 @@ namespace sv
 			);
 		}
 
-		setTransientValues(alias:string, values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		setTransientValues(resident_id:string, values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.setTransientValuesReq(
 				{
-					"alias":alias,
+					"resident_id":resident_id,
+					"values":values
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		deleteTransientValueReq(request:DeleteTransientValueRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("DeleteTransientValue",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		deleteTransientValue(resident_id:string, key:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.deleteTransientValueReq(
+				{
+					"resident_id":resident_id,
+					"key":key
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		deleteTransientValuesReq(request:DeleteTransientValuesRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("DeleteTransientValues",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		deleteTransientValues(resident_id:string, values:Array<string>, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.deleteTransientValuesReq(
+				{
+					"resident_id":resident_id,
 					"values":values
 				},
 				onSuccess,
@@ -759,12 +904,11 @@ namespace sv
 			);
 		}
 
-		getTransientValue(id:string, alias:string, key:string, onSuccess?:(reply:TransientDataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getTransientValue(resident_id:string, key:string, onSuccess?:(reply:TransientDataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getTransientValueReq(
 				{
-					"id":id,
-					"alias":alias,
+					"resident_id":resident_id,
 					"key":key
 				},
 				onSuccess,
@@ -782,12 +926,11 @@ namespace sv
 			);
 		}
 
-		getTransientValues(id:string, alias:string, keys:Array<string>, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getTransientValues(resident_id:string, keys:Array<string>, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getTransientValuesReq(
 				{
-					"id":id,
-					"alias":alias,
+					"resident_id":resident_id,
 					"keys":keys
 				},
 				onSuccess,
@@ -805,12 +948,11 @@ namespace sv
 			);
 		}
 
-		getAllTransientValues(id:string, alias:string, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		getAllTransientValues(resident_id:string, onSuccess?:(reply:TransientDataItemsReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.getAllTransientValuesReq(
 				{
-					"id":id,
-					"alias":alias
+					"resident_id":resident_id
 				},
 				onSuccess,
 				onError
@@ -827,12 +969,12 @@ namespace sv
 			);
 		}
 
-		joinChannel(alias:string, id:string, values:{[key:string]:any}, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		joinChannel(channel_id:string, resident_id:string, values:{[key:string]:any}, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.joinChannelReq(
 				{
-					"alias":alias,
-					"id":id,
+					"channel_id":channel_id,
+					"resident_id":resident_id,
 					"values":values
 				},
 				onSuccess,
@@ -850,12 +992,12 @@ namespace sv
 			);
 		}
 
-		leaveChannel(alias:string, id:string, final_values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		leaveChannel(channel_id:string, resident_id:string, final_values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.leaveChannelReq(
 				{
-					"alias":alias,
-					"id":id,
+					"channel_id":channel_id,
+					"resident_id":resident_id,
 					"final_values":final_values
 				},
 				onSuccess,
@@ -863,22 +1005,22 @@ namespace sv
 			);
 		}
 
-		addAliasToChannelReq(request:JoinChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		addResidentToChannelReq(request:JoinChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.apiByName("AddAliasToChannel",
+			this.apiByName("AddResidentToChannel",
 				request,
 				onSuccess,
 				onError
 			);
 		}
 
-		addAliasToChannel(alias:string, id:string, values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		addResidentToChannel(channel_id:string, resident_id:string, values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-			this.addAliasToChannelReq(
+			this.addResidentToChannelReq(
 				{
-					"alias":alias,
-					"id":id,
+					"channel_id":channel_id,
+					"resident_id":resident_id,
 					"values":values
 				},
 				onSuccess,
@@ -886,22 +1028,22 @@ namespace sv
 			);
 		}
 
-		removeAliasFromChannelReq(request:LeaveChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		removeResidentFromChannelReq(request:LeaveChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.apiByName("RemoveAliasFromChannel",
+			this.apiByName("RemoveResidentFromChannel",
 				request,
 				onSuccess,
 				onError
 			);
 		}
 
-		removeAliasFromChannel(alias:string, id:string, final_values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		removeResidentFromChannel(channel_id:string, resident_id:string, final_values:{[key:string]:any}, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-			this.removeAliasFromChannelReq(
+			this.removeResidentFromChannelReq(
 				{
-					"alias":alias,
-					"id":id,
+					"channel_id":channel_id,
+					"resident_id":resident_id,
 					"final_values":final_values
 				},
 				onSuccess,
@@ -909,7 +1051,7 @@ namespace sv
 			);
 		}
 
-		listenToChannelReq(request:ListenToResidentRequest, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		listenToChannelReq(request:ListenToChannelRequest, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.apiByName("ListenToChannel",
@@ -919,18 +1061,18 @@ namespace sv
 			);
 		}
 
-		listenToChannel(id:string, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		listenToChannel(channel_id:string, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.listenToChannelReq(
 				{
-					"id":id
+					"channel_id":channel_id
 				},
 				onSuccess,
 				onError
 			);
 		}
 
-		stopListenToChannelReq(request:StopListenToResidentRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		stopListenToChannelReq(request:StopListenToChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
 			this.apiByName("StopListenToChannel",
@@ -940,35 +1082,100 @@ namespace sv
 			);
 		}
 
-		stopListenToChannel(id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		stopListenToChannel(channel_id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
 			this.stopListenToChannelReq(
 				{
-					"id":id
+					"channel_id":channel_id
 				},
 				onSuccess,
 				onError
 			);
 		}
 
-		sendClientMessageReq(request:TransientMessageRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		triggerResidentEventReq(request:TriggerResidentEventRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.apiByName("SendClientMessage",
+			this.apiByName("TriggerResidentEvent",
 				request,
 				onSuccess,
 				onError
 			);
 		}
 
-		sendClientMessage(to:string, alias:string, message_type:string, value:any, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		triggerResidentEvent(resident_id:string, event_type:string, event_data:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-			this.sendClientMessageReq(
+			this.triggerResidentEventReq(
+				{
+					"resident_id":resident_id,
+					"event_type":event_type,
+					"event_data":event_data
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		sendUserMessageReq(request:SendUserMessageRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("SendUserMessage",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		sendUserMessage(to:string, message_type:string, message:string, guaranteed:boolean, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.sendUserMessageReq(
 				{
 					"to":to,
-					"alias":alias,
 					"message_type":message_type,
-					"value":value
+					"message":message,
+					"guaranteed":guaranteed
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		getPendingMessagesReq(request:EmptyClientRequest, onSuccess?:(reply:UserMessageList)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("GetPendingMessages",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getPendingMessages(onSuccess?:(reply:UserMessageList)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getPendingMessagesReq(
+				{
+
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		clearPendingMessageReq(request:ClearMessageRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("ClearPendingMessage",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		clearPendingMessage(id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.clearPendingMessageReq(
+				{
+					"id":id
 				},
 				onSuccess,
 				onError

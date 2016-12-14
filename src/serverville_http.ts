@@ -6,21 +6,26 @@ namespace sv
 	{
         SV:Serverville;
         
-        public constructor(sv:Serverville)
+        constructor(sv:Serverville)
         {
             this.SV = sv;
         }
         
-        public init(onConnected:(err:ErrorReply)=>void)
+        init(onConnected:(err:ErrorReply)=>void)
         {
             if(onConnected != null)
                 onConnected(null);
         }
         
-        public callApi(api:string, request:Object, onSuccess:(reply:Object)=>void, onError:(reply:ErrorReply)=>void):void
+		callApi(api:string, request:Object, onSuccess:(reply:Object)=>void, onError:(reply:ErrorReply)=>void):void
+		{
+			this.doPost(this.SV.ServerURL+"/api/"+api, request, onSuccess, onError);
+		}
+
+        private doPost(url:string, request:Object, onSuccess:(reply:Object)=>void, onError:(reply:ErrorReply)=>void):void
         {
             var req:XMLHttpRequest = new XMLHttpRequest();
-			req.open("POST", this.SV.ServerURL+"/api/"+api);
+			req.open("POST", url);
 			if(this.SV.SessionId)
 				req.setRequestHeader("Authorization", this.SV.SessionId);
 			req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
@@ -53,6 +58,12 @@ namespace sv
 					else
 						self._onServerError(error);
 				}
+
+				if(req.getResponseHeader("X-Notifications"))
+				{
+					// Pending notifications from the server!
+					this.getNotifications();
+				}
 				
 			};
 			
@@ -69,9 +80,33 @@ namespace sv
 			req.send(body);
         }
 
-		public close():void
+		close():void
 		{
 			
+		}
+
+		private getNotifications():void
+		{
+			var url:string = this.SV.ServerURL+"/notifications";
+
+			var onSuccess = function(reply:PendingNotificationList):void
+			{
+				if(!reply.notifications)
+					return;
+
+				for(var i:number=0; i<reply.notifications.length; i++)
+				{
+					let note:PendingNotification = reply.notifications[i];
+					this.SV._onServerNotification(note.notification_type, note.body);
+				}
+			};
+
+			var onError = function(err:ErrorReply):void
+			{
+				console.log("Error retreiving notifications: "+err.errorMessage);
+			};
+
+			this.doPost(url, {}, onSuccess, onError);
 		}
     }
 }

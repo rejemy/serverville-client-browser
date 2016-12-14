@@ -118,7 +118,7 @@ namespace sv
             }
             
             var messageType:string = messageStr.substring(0, split1);
-            if(messageType == "M")
+            if(messageType == "N")
             {
                 // Server push message
                 var split2:number = messageStr.indexOf(":", split1+1);
@@ -127,29 +127,10 @@ namespace sv
                     console.log("Incorrectly formatted message");
                     return;
                 }
-                var split3:number = messageStr.indexOf(":", split2+1);
-                if(split3 < 0)
-                {
-                    console.log("Incorrectly formatted message");
-                    return;
-                }
-                var split4:number = messageStr.indexOf(":", split3+1);
-                if(split4 < 0)
-                {
-                    console.log("Incorrectly formatted message");
-                    return;
-                }
                 
-                var messageType:string = messageStr.substring(split1+1, split2);
-                var messageFrom:string = messageStr.substring(split2+1, split3);
-                var messageVia:string = messageStr.substring(split3+1, split4);
-                var messageJson:string = messageStr.substring(split4+1);
-                var messageData:Object = messageJson.length ? JSON.parse(messageJson) : null;
-                if(messageFrom.length == 0)
-                    messageFrom = null;
-                if(messageVia.length == 0)
-                    messageVia = null;
-				this.SV._onServerMessage(messageType, messageFrom, messageVia, messageData);
+                var notificationType:string = messageStr.substring(split1+1, split2);
+                var notificationJson:string = messageStr.substring(split2+1);
+				this.SV._onServerNotification(notificationType, notificationJson);
             }
             else if(messageType == "E" || messageType == "R")
             {

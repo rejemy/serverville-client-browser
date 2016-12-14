@@ -190,7 +190,7 @@ namespace sv
 	export interface KeyDataInfo
 	{
 		id:string;
-		type:string;
+		record_type:string;
 		owner:string;
 		parent:string;
 		version:number;
@@ -200,7 +200,7 @@ namespace sv
 
 	export interface KeyDataRecordsRequest
 	{
-		type:string;
+		record_type:string;
 		parent:string;
 	}
 
@@ -215,23 +215,57 @@ namespace sv
 		values:Array<SetUserDataRequest>;
 	}
 
+	export interface CreateResidentRequest
+	{
+		resident_type:string;
+		values:{[key:string]:any};
+	}
+
+	export interface CreateResidentReply
+	{
+		resident_id:string;
+	}
+
+	export interface DeleteResidentRequest
+	{
+		resident_id:string;
+		final_values:{[key:string]:any};
+	}
+
+	export interface RemoveResidentFromAllChannelsRequest
+	{
+		resident_id:string;
+		final_values:{[key:string]:any};
+	}
+
 	export interface SetTransientValueRequest
 	{
-		alias:string;
+		resident_id:string;
 		key:string;
 		value:any;
 	}
 
 	export interface SetTransientValuesRequest
 	{
-		alias:string;
+		resident_id:string;
 		values:{[key:string]:any};
+	}
+
+	export interface DeleteTransientValueRequest
+	{
+		resident_id:string;
+		key:string;
+	}
+
+	export interface DeleteTransientValuesRequest
+	{
+		resident_id:string;
+		values:Array<string>;
 	}
 
 	export interface GetTransientValueRequest
 	{
-		id:string;
-		alias:string;
+		resident_id:string;
 		key:string;
 	}
 
@@ -242,8 +276,7 @@ namespace sv
 
 	export interface GetTransientValuesRequest
 	{
-		id:string;
-		alias:string;
+		resident_id:string;
 		keys:Array<string>;
 	}
 
@@ -254,53 +287,78 @@ namespace sv
 
 	export interface GetAllTransientValuesRequest
 	{
-		id:string;
-		alias:string;
+		resident_id:string;
 	}
 
 	export interface JoinChannelRequest
 	{
-		alias:string;
-		id:string;
+		channel_id:string;
+		resident_id:string;
 		values:{[key:string]:any};
 	}
 
 	export interface ChannelMemberInfo
 	{
-		id:string;
+		resident_id:string;
 		values:{[key:string]:any};
 	}
 
 	export interface ChannelInfo
 	{
-		id:string;
+		channel_id:string;
 		values:{[key:string]:any};
 		members:{[key:string]:ChannelMemberInfo};
 	}
 
 	export interface LeaveChannelRequest
 	{
-		alias:string;
-		id:string;
+		channel_id:string;
+		resident_id:string;
 		final_values:{[key:string]:any};
 	}
 
-	export interface ListenToResidentRequest
+	export interface ListenToChannelRequest
 	{
-		id:string;
+		channel_id:string;
 	}
 
-	export interface StopListenToResidentRequest
+	export interface StopListenToChannelRequest
 	{
-		id:string;
+		channel_id:string;
 	}
 
-	export interface TransientMessageRequest
+	export interface TriggerResidentEventRequest
+	{
+		resident_id:string;
+		event_type:string;
+		event_data:string;
+	}
+
+	export interface SendUserMessageRequest
 	{
 		to:string;
-		alias:string;
 		message_type:string;
-		value:any;
+		message:string;
+		guaranteed:boolean;
+	}
+
+	export interface UserMessageNotification
+	{
+		id:string;
+		message_type:string;
+		message:string;
+		from_id:string;
+		sender_is_user:boolean;
+	}
+
+	export interface UserMessageList
+	{
+		messages:Array<UserMessageNotification>;
+	}
+
+	export interface ClearMessageRequest
+	{
+		id:string;
 	}
 
 	export interface CurrencyBalanceRequest
@@ -355,6 +413,47 @@ namespace sv
 		product_id:string;
 		price:number;
 		currencies:{[key:string]:number};
+	}
+
+	export interface ResidentJoinedNotification
+	{
+		resident_id:string;
+		via_channel:string;
+		values:{[key:string]:any};
+	}
+
+	export interface ResidentStateUpdateNotification
+	{
+		resident_id:string;
+		via_channel:string;
+		values:{[key:string]:any};
+		deleted:Array<string>;
+	}
+
+	export interface ResidentLeftNotification
+	{
+		resident_id:string;
+		via_channel:string;
+		final_values:{[key:string]:any};
+	}
+
+	export interface ResidentEventNotification
+	{
+		resident_id:string;
+		via_channel:string;
+		event_type:string;
+		event_data:string;
+	}
+
+	export interface PendingNotification
+	{
+		notification_type:string;
+		body:string;
+	}
+
+	export interface PendingNotificationList
+	{
+		notifications:Array<PendingNotification>;
 	}
 
 

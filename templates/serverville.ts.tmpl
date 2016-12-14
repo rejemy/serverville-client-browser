@@ -7,7 +7,7 @@
 namespace sv
 {
 
-	type ServerMessageTypeHandler = (from:string, via:string, msg:Object)=>void;
+	type ServerMessageTypeHandler = (message:UserMessageNotification)=>void;
 	
 	export class Serverville
 	{
@@ -25,8 +25,13 @@ namespace sv
         
 		GlobalErrorHandler:(ev:ErrorReply)=>void;
 		
-		ServerMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler} = {};
-		ServerMessageHandler:(messageType:string, from:string, via:string, msg:Object)=>void;
+		UserMessageTypeHandlers:{[id:string]:ServerMessageTypeHandler} = {};
+		UserMessageHandler:(message:UserMessageNotification)=>void;
+		
+		ResidentJoinedHandler:(notification:ResidentJoinedNotification)=>void;
+		ResidentLeftHandler:(notification:ResidentLeftNotification)=>void;
+		ResidentEventHandler:(notification:ResidentEventNotification)=>void;
+		ResidentStateUpdateHandler:(notification:ResidentStateUpdateNotification)=>void;
 		
 		private LastSend:number = 0;
 		private PingTimer:number = 0;
@@ -113,6 +118,7 @@ namespace sv
 			}
 			this.PingTimer = 0;
 		}
+
 		private setUserInfo(userInfo:SignInReply):void
 		{
 			if(userInfo == null)
@@ -147,27 +153,56 @@ namespace sv
 			}
 		}
 		
-		_onServerMessage(messageId:string, from:string, via:string, data:Object):void
+		_onServerNotification(notificationType:string, notificationJson:string):void
 		{
-			if(messageId == "_error")
-			{
-				// Pushed error
-				this._onServerError(<ErrorReply>data);
-				return;
-			}
+			var notification:Object = JSON.parse(notificationJson);
 
-			var typeHandler:ServerMessageTypeHandler = this.ServerMessageTypeHandlers[messageId];
+			switch(notificationType)
+			{
+				case "error":
+					// Pushed error
+					this._onServerError(<ErrorReply>notification);
+					return;
+				case "msg":
+					// User message
+					this._onUserMessage(<UserMessageNotification>notification);
+					return;
+				case "resJoined":
+					if(this.ResidentJoinedHandler)
+						this.ResidentJoinedHandler(<ResidentJoinedNotification>notification);
+					return;
+				case "resLeft":
+					if(this.ResidentLeftHandler)
+						this.ResidentLeftHandler(<ResidentLeftNotification>notification);
+					return;
+				case "resEvent":
+					if(this.ResidentEventHandler)
+						this.ResidentEventHandler(<ResidentEventNotification>notification);
+					return;
+				case "resUpdate":
+					if(this.ResidentStateUpdateHandler)
+						this.ResidentStateUpdateHandler(<ResidentStateUpdateNotification>notification);
+					return;
+				default:
+					console.log("Unknown type of server notification: "+notificationType);
+					return;
+			}	
+		}
+
+		_onUserMessage(message:UserMessageNotification):void
+		{
+			var typeHandler:ServerMessageTypeHandler = this.UserMessageTypeHandlers[message.message_type];
 			if(typeHandler != null)
 			{
-				typeHandler(from, via, data);
+				typeHandler(message);
 			}
-			else if(this.ServerMessageHandler != null)
+			else if(this.UserMessageHandler != null)
 			{
-				this.ServerMessageHandler(messageId, from, via, data);
+				this.UserMessageHandler(message);
 			}
 			else
 			{
-				console.log("No handler for message "+messageId);
+				console.log("No handler for message "+message.message_type);
 			}
 		}
 		

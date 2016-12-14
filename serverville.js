@@ -43,8 +43,11 @@ var sv;
                 onConnected(null);
         };
         HttpTransport.prototype.callApi = function (api, request, onSuccess, onError) {
+            this.doPost(this.SV.ServerURL + "/api/" + api, request, onSuccess, onError);
+        };
+        HttpTransport.prototype.doPost = function (url, request, onSuccess, onError) {
             var req = new XMLHttpRequest();
-            req.open("POST", this.SV.ServerURL + "/api/" + api);
+            req.open("POST", url);
             if (this.SV.SessionId)
                 req.setRequestHeader("Authorization", this.SV.SessionId);
             req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
@@ -68,6 +71,10 @@ var sv;
                     else
                         self._onServerError(error);
                 }
+                if (req.getResponseHeader("X-Notifications")) {
+                    // Pending notifications from the server!
+                    this.getNotifications();
+                }
             };
             req.onerror = function (ev) {
                 var err = sv_1.makeClientError(-2);
@@ -79,6 +86,21 @@ var sv;
             req.send(body);
         };
         HttpTransport.prototype.close = function () {
+        };
+        HttpTransport.prototype.getNotifications = function () {
+            var url = this.SV.ServerURL + "/notifications";
+            var onSuccess = function (reply) {
+                if (!reply.notifications)
+                    return;
+                for (var i = 0; i < reply.notifications.length; i++) {
+                    var note = reply.notifications[i];
+                    this.SV._onServerNotification(note.notification_type, note.body);
+                }
+            };
+            var onError = function (err) {
+                console.log("Error retreiving notifications: " + err.errorMessage);
+            };
+            this.doPost(url, {}, onSuccess, onError);
         };
         return HttpTransport;
     }());
@@ -160,33 +182,16 @@ var sv;
                 return;
             }
             var messageType = messageStr.substring(0, split1);
-            if (messageType == "M") {
+            if (messageType == "N") {
                 // Server push message
                 var split2 = messageStr.indexOf(":", split1 + 1);
                 if (split2 < 0) {
                     console.log("Incorrectly formatted message");
                     return;
                 }
-                var split3 = messageStr.indexOf(":", split2 + 1);
-                if (split3 < 0) {
-                    console.log("Incorrectly formatted message");
-                    return;
-                }
-                var split4 = messageStr.indexOf(":", split3 + 1);
-                if (split4 < 0) {
-                    console.log("Incorrectly formatted message");
-                    return;
-                }
-                var messageType = messageStr.substring(split1 + 1, split2);
-                var messageFrom = messageStr.substring(split2 + 1, split3);
-                var messageVia = messageStr.substring(split3 + 1, split4);
-                var messageJson = messageStr.substring(split4 + 1);
-                var messageData = messageJson.length ? JSON.parse(messageJson) : null;
-                if (messageFrom.length == 0)
-                    messageFrom = null;
-                if (messageVia.length == 0)
-                    messageVia = null;
-                this.SV._onServerMessage(messageType, messageFrom, messageVia, messageData);
+                var notificationType = messageStr.substring(split1 + 1, split2);
+                var notificationJson = messageStr.substring(split2 + 1);
+                this.SV._onServerNotification(notificationType, notificationJson);
             }
             else if (messageType == "E" || messageType == "R") {
                 // Reply
@@ -223,7 +228,7 @@ var sv;
         function Serverville(url) {
             this.LogMessagesToConsole = false;
             this.PingPeriod = 5000;
-            this.ServerMessageTypeHandlers = {};
+            this.UserMessageTypeHandlers = {};
             this.LastSend = 0;
             this.PingTimer = 0;
             this.LastServerTime = 0;
@@ -302,21 +307,48 @@ var sv;
                 this.shutdown();
             }
         };
-        Serverville.prototype._onServerMessage = function (messageId, from, via, data) {
-            if (messageId == "_error") {
-                // Pushed error
-                this._onServerError(data);
-                return;
+        Serverville.prototype._onServerNotification = function (notificationType, notificationJson) {
+            var notification = JSON.parse(notificationJson);
+            switch (notificationType) {
+                case "error":
+                    // Pushed error
+                    this._onServerError(notification);
+                    return;
+                case "msg":
+                    // User message
+                    this._onUserMessage(notification);
+                    return;
+                case "resJoined":
+                    if (this.ResidentJoinedHandler)
+                        this.ResidentJoinedHandler(notification);
+                    return;
+                case "resLeft":
+                    if (this.ResidentLeftHandler)
+                        this.ResidentLeftHandler(notification);
+                    return;
+                case "resEvent":
+                    if (this.ResidentEventHandler)
+                        this.ResidentEventHandler(notification);
+                    return;
+                case "resUpdate":
+                    if (this.ResidentStateUpdateHandler)
+                        this.ResidentStateUpdateHandler(notification);
+                    return;
+                default:
+                    console.log("Unknown type of server notification: " + notificationType);
+                    return;
             }
-            var typeHandler = this.ServerMessageTypeHandlers[messageId];
+        };
+        Serverville.prototype._onUserMessage = function (message) {
+            var typeHandler = this.UserMessageTypeHandlers[message.message_type];
             if (typeHandler != null) {
-                typeHandler(from, via, data);
+                typeHandler(message);
             }
-            else if (this.ServerMessageHandler != null) {
-                this.ServerMessageHandler(messageId, from, via, data);
+            else if (this.UserMessageHandler != null) {
+                this.UserMessageHandler(message);
             }
             else {
-                console.log("No handler for message " + messageId);
+                console.log("No handler for message " + message.message_type);
             }
         };
         Serverville.prototype._onTransportClosed = function () {
@@ -553,9 +585,9 @@ var sv;
         Serverville.prototype.getKeyDataRecordsReq = function (request, onSuccess, onError) {
             this.apiByName("GetKeyDataRecords", request, onSuccess, onError);
         };
-        Serverville.prototype.getKeyDataRecords = function (type, parent, onSuccess, onError) {
+        Serverville.prototype.getKeyDataRecords = function (record_type, parent, onSuccess, onError) {
             this.getKeyDataRecordsReq({
-                "type": type,
+                "record_type": record_type,
                 "parent": parent
             }, onSuccess, onError);
         };
@@ -568,12 +600,39 @@ var sv;
                 "values": values
             }, onSuccess, onError);
         };
+        Serverville.prototype.createResidentReq = function (request, onSuccess, onError) {
+            this.apiByName("CreateResident", request, onSuccess, onError);
+        };
+        Serverville.prototype.createResident = function (resident_type, values, onSuccess, onError) {
+            this.createResidentReq({
+                "resident_type": resident_type,
+                "values": values
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.deleteResidentReq = function (request, onSuccess, onError) {
+            this.apiByName("DeleteResident", request, onSuccess, onError);
+        };
+        Serverville.prototype.deleteResident = function (resident_id, final_values, onSuccess, onError) {
+            this.deleteResidentReq({
+                "resident_id": resident_id,
+                "final_values": final_values
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.removeResidentFromAllChannelsReq = function (request, onSuccess, onError) {
+            this.apiByName("RemoveResidentFromAllChannels", request, onSuccess, onError);
+        };
+        Serverville.prototype.removeResidentFromAllChannels = function (resident_id, final_values, onSuccess, onError) {
+            this.removeResidentFromAllChannelsReq({
+                "resident_id": resident_id,
+                "final_values": final_values
+            }, onSuccess, onError);
+        };
         Serverville.prototype.setTransientValueReq = function (request, onSuccess, onError) {
             this.apiByName("SetTransientValue", request, onSuccess, onError);
         };
-        Serverville.prototype.setTransientValue = function (alias, key, value, onSuccess, onError) {
+        Serverville.prototype.setTransientValue = function (resident_id, key, value, onSuccess, onError) {
             this.setTransientValueReq({
-                "alias": alias,
+                "resident_id": resident_id,
                 "key": key,
                 "value": value
             }, onSuccess, onError);
@@ -581,106 +640,145 @@ var sv;
         Serverville.prototype.setTransientValuesReq = function (request, onSuccess, onError) {
             this.apiByName("SetTransientValues", request, onSuccess, onError);
         };
-        Serverville.prototype.setTransientValues = function (alias, values, onSuccess, onError) {
+        Serverville.prototype.setTransientValues = function (resident_id, values, onSuccess, onError) {
             this.setTransientValuesReq({
-                "alias": alias,
+                "resident_id": resident_id,
+                "values": values
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.deleteTransientValueReq = function (request, onSuccess, onError) {
+            this.apiByName("DeleteTransientValue", request, onSuccess, onError);
+        };
+        Serverville.prototype.deleteTransientValue = function (resident_id, key, onSuccess, onError) {
+            this.deleteTransientValueReq({
+                "resident_id": resident_id,
+                "key": key
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.deleteTransientValuesReq = function (request, onSuccess, onError) {
+            this.apiByName("DeleteTransientValues", request, onSuccess, onError);
+        };
+        Serverville.prototype.deleteTransientValues = function (resident_id, values, onSuccess, onError) {
+            this.deleteTransientValuesReq({
+                "resident_id": resident_id,
                 "values": values
             }, onSuccess, onError);
         };
         Serverville.prototype.getTransientValueReq = function (request, onSuccess, onError) {
             this.apiByName("GetTransientValue", request, onSuccess, onError);
         };
-        Serverville.prototype.getTransientValue = function (id, alias, key, onSuccess, onError) {
+        Serverville.prototype.getTransientValue = function (resident_id, key, onSuccess, onError) {
             this.getTransientValueReq({
-                "id": id,
-                "alias": alias,
+                "resident_id": resident_id,
                 "key": key
             }, onSuccess, onError);
         };
         Serverville.prototype.getTransientValuesReq = function (request, onSuccess, onError) {
             this.apiByName("GetTransientValues", request, onSuccess, onError);
         };
-        Serverville.prototype.getTransientValues = function (id, alias, keys, onSuccess, onError) {
+        Serverville.prototype.getTransientValues = function (resident_id, keys, onSuccess, onError) {
             this.getTransientValuesReq({
-                "id": id,
-                "alias": alias,
+                "resident_id": resident_id,
                 "keys": keys
             }, onSuccess, onError);
         };
         Serverville.prototype.getAllTransientValuesReq = function (request, onSuccess, onError) {
             this.apiByName("GetAllTransientValues", request, onSuccess, onError);
         };
-        Serverville.prototype.getAllTransientValues = function (id, alias, onSuccess, onError) {
+        Serverville.prototype.getAllTransientValues = function (resident_id, onSuccess, onError) {
             this.getAllTransientValuesReq({
-                "id": id,
-                "alias": alias
+                "resident_id": resident_id
             }, onSuccess, onError);
         };
         Serverville.prototype.joinChannelReq = function (request, onSuccess, onError) {
             this.apiByName("JoinChannel", request, onSuccess, onError);
         };
-        Serverville.prototype.joinChannel = function (alias, id, values, onSuccess, onError) {
+        Serverville.prototype.joinChannel = function (channel_id, resident_id, values, onSuccess, onError) {
             this.joinChannelReq({
-                "alias": alias,
-                "id": id,
+                "channel_id": channel_id,
+                "resident_id": resident_id,
                 "values": values
             }, onSuccess, onError);
         };
         Serverville.prototype.leaveChannelReq = function (request, onSuccess, onError) {
             this.apiByName("LeaveChannel", request, onSuccess, onError);
         };
-        Serverville.prototype.leaveChannel = function (alias, id, final_values, onSuccess, onError) {
+        Serverville.prototype.leaveChannel = function (channel_id, resident_id, final_values, onSuccess, onError) {
             this.leaveChannelReq({
-                "alias": alias,
-                "id": id,
+                "channel_id": channel_id,
+                "resident_id": resident_id,
                 "final_values": final_values
             }, onSuccess, onError);
         };
-        Serverville.prototype.addAliasToChannelReq = function (request, onSuccess, onError) {
-            this.apiByName("AddAliasToChannel", request, onSuccess, onError);
+        Serverville.prototype.addResidentToChannelReq = function (request, onSuccess, onError) {
+            this.apiByName("AddResidentToChannel", request, onSuccess, onError);
         };
-        Serverville.prototype.addAliasToChannel = function (alias, id, values, onSuccess, onError) {
-            this.addAliasToChannelReq({
-                "alias": alias,
-                "id": id,
+        Serverville.prototype.addResidentToChannel = function (channel_id, resident_id, values, onSuccess, onError) {
+            this.addResidentToChannelReq({
+                "channel_id": channel_id,
+                "resident_id": resident_id,
                 "values": values
             }, onSuccess, onError);
         };
-        Serverville.prototype.removeAliasFromChannelReq = function (request, onSuccess, onError) {
-            this.apiByName("RemoveAliasFromChannel", request, onSuccess, onError);
+        Serverville.prototype.removeResidentFromChannelReq = function (request, onSuccess, onError) {
+            this.apiByName("RemoveResidentFromChannel", request, onSuccess, onError);
         };
-        Serverville.prototype.removeAliasFromChannel = function (alias, id, final_values, onSuccess, onError) {
-            this.removeAliasFromChannelReq({
-                "alias": alias,
-                "id": id,
+        Serverville.prototype.removeResidentFromChannel = function (channel_id, resident_id, final_values, onSuccess, onError) {
+            this.removeResidentFromChannelReq({
+                "channel_id": channel_id,
+                "resident_id": resident_id,
                 "final_values": final_values
             }, onSuccess, onError);
         };
         Serverville.prototype.listenToChannelReq = function (request, onSuccess, onError) {
             this.apiByName("ListenToChannel", request, onSuccess, onError);
         };
-        Serverville.prototype.listenToChannel = function (id, onSuccess, onError) {
+        Serverville.prototype.listenToChannel = function (channel_id, onSuccess, onError) {
             this.listenToChannelReq({
-                "id": id
+                "channel_id": channel_id
             }, onSuccess, onError);
         };
         Serverville.prototype.stopListenToChannelReq = function (request, onSuccess, onError) {
             this.apiByName("StopListenToChannel", request, onSuccess, onError);
         };
-        Serverville.prototype.stopListenToChannel = function (id, onSuccess, onError) {
+        Serverville.prototype.stopListenToChannel = function (channel_id, onSuccess, onError) {
             this.stopListenToChannelReq({
-                "id": id
+                "channel_id": channel_id
             }, onSuccess, onError);
         };
-        Serverville.prototype.sendClientMessageReq = function (request, onSuccess, onError) {
-            this.apiByName("SendClientMessage", request, onSuccess, onError);
+        Serverville.prototype.triggerResidentEventReq = function (request, onSuccess, onError) {
+            this.apiByName("TriggerResidentEvent", request, onSuccess, onError);
         };
-        Serverville.prototype.sendClientMessage = function (to, alias, message_type, value, onSuccess, onError) {
-            this.sendClientMessageReq({
+        Serverville.prototype.triggerResidentEvent = function (resident_id, event_type, event_data, onSuccess, onError) {
+            this.triggerResidentEventReq({
+                "resident_id": resident_id,
+                "event_type": event_type,
+                "event_data": event_data
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.sendUserMessageReq = function (request, onSuccess, onError) {
+            this.apiByName("SendUserMessage", request, onSuccess, onError);
+        };
+        Serverville.prototype.sendUserMessage = function (to, message_type, message, guaranteed, onSuccess, onError) {
+            this.sendUserMessageReq({
                 "to": to,
-                "alias": alias,
                 "message_type": message_type,
-                "value": value
+                "message": message,
+                "guaranteed": guaranteed
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.getPendingMessagesReq = function (request, onSuccess, onError) {
+            this.apiByName("GetPendingMessages", request, onSuccess, onError);
+        };
+        Serverville.prototype.getPendingMessages = function (onSuccess, onError) {
+            this.getPendingMessagesReq({}, onSuccess, onError);
+        };
+        Serverville.prototype.clearPendingMessageReq = function (request, onSuccess, onError) {
+            this.apiByName("ClearPendingMessage", request, onSuccess, onError);
+        };
+        Serverville.prototype.clearPendingMessage = function (id, onSuccess, onError) {
+            this.clearPendingMessageReq({
+                "id": id
             }, onSuccess, onError);
         };
         Serverville.prototype.getCurrencyBalanceReq = function (request, onSuccess, onError) {
