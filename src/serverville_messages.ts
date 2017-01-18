@@ -215,6 +215,16 @@ namespace sv
 		values:Array<SetUserDataRequest>;
 	}
 
+	export interface GetHostWithResidentRequest
+	{
+		resident_id:string;
+	}
+
+	export interface GetHostWithResidentReply
+	{
+		host:string;
+	}
+
 	export interface CreateResidentRequest
 	{
 		resident_type:string;

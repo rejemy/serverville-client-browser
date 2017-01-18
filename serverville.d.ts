@@ -218,6 +218,16 @@ declare namespace sv
 		values:Array<SetUserDataRequest>;
 	}
 
+	export interface GetHostWithResidentRequest
+	{
+		resident_id:string;
+	}
+
+	export interface GetHostWithResidentReply
+	{
+		host:string;
+	}
+
 	export interface CreateResidentRequest
 	{
 		resident_type:string;
@@ -531,6 +541,8 @@ declare namespace sv
 		getKeyDataRecords(record_type:string, parent:string, onSuccess?:(reply:KeyDataRecords)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setDataKeysReq(request:SetGlobalDataRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setDataKeys(id:string, values:Array<SetUserDataRequest>, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getHostWithResidentReq(request:GetHostWithResidentRequest, onSuccess?:(reply:GetHostWithResidentReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getHostWithResident(resident_id:string, onSuccess?:(reply:GetHostWithResidentReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		createResidentReq(request:CreateResidentRequest, onSuccess?:(reply:CreateResidentReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		createResident(resident_type:string, values:{[key:string]:any}, onSuccess?:(reply:CreateResidentReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		deleteResidentReq(request:DeleteResidentRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;

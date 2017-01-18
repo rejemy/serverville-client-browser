@@ -54,9 +54,9 @@ var sv;
             var body = JSON.stringify(request);
             if (this.SV.LogMessagesToConsole)
                 console.log("HTTP<- " + body);
-            var self = this.SV;
+            var self = this;
             req.onload = function (ev) {
-                if (self.LogMessagesToConsole)
+                if (self.SV.LogMessagesToConsole)
                     console.log("HTTP-> " + req.response);
                 if (req.status >= 200 && req.status < 400) {
                     var message = JSON.parse(req.response);
@@ -69,11 +69,11 @@ var sv;
                     if (onError)
                         onError(error);
                     else
-                        self._onServerError(error);
+                        self.SV._onServerError(error);
                 }
                 if (req.getResponseHeader("X-Notifications")) {
                     // Pending notifications from the server!
-                    this.getNotifications();
+                    self.getNotifications();
                 }
             };
             req.onerror = function (ev) {
@@ -81,7 +81,7 @@ var sv;
                 if (onError)
                     onError(err);
                 else
-                    self._onServerError(err);
+                    self.SV._onServerError(err);
             };
             req.send(body);
         };
@@ -233,22 +233,26 @@ var sv;
             this.PingTimer = 0;
             this.LastServerTime = 0;
             this.LastServerTimeAt = 0;
-            this.ServerURL = url;
             this.SessionId = localStorage.getItem("SessionId");
+            this.initServerUrl(url);
+        }
+        Serverville.prototype.initServerUrl = function (url) {
+            this.ServerURL = url;
             var protocolLen = this.ServerURL.indexOf("://");
             if (protocolLen < 2)
                 throw "Malformed url: " + url;
             this.ServerHost = this.ServerURL.substring(protocolLen + 3);
-            if (this.ServerURL.substr(0, 5) == "ws://" || this.ServerURL.substr(0, 6) == "wss://") {
+            this.ServerProtocol = this.ServerURL.substring(0, protocolLen);
+            if (this.ServerProtocol == "ws" || this.ServerProtocol == "wss") {
                 this.Transport = new sv.WebSocketTransport(this);
             }
-            else if (this.ServerURL.substr(0, 7) == "http://" || this.ServerURL.substr(0, 8) == "https://") {
+            else if (this.ServerProtocol == "http" || this.ServerProtocol == "https") {
                 this.Transport = new sv.HttpTransport(this);
             }
             else {
                 throw "Unknown server protocol: " + url;
             }
-        }
+        };
         Serverville.prototype.init = function (onComplete) {
             var self = this;
             this.Transport.init(function (err) {
@@ -268,6 +272,21 @@ var sv;
                 else {
                     onComplete(null, null);
                 }
+            });
+        };
+        Serverville.prototype.switchHosts = function (host, onComplete) {
+            var url = host;
+            if (host.indexOf("://") < 0) {
+                url = this.ServerProtocol + "://" + host;
+            }
+            if (this.ServerURL == url) {
+                onComplete(null);
+                return;
+            }
+            this.shutdown();
+            this.initServerUrl(url);
+            this.init(function (user, err) {
+                onComplete(err);
             });
         };
         Serverville.prototype.startPingHeartbeat = function () {
@@ -598,6 +617,14 @@ var sv;
             this.setDataKeysReq({
                 "id": id,
                 "values": values
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.getHostWithResidentReq = function (request, onSuccess, onError) {
+            this.apiByName("GetHostWithResident", request, onSuccess, onError);
+        };
+        Serverville.prototype.getHostWithResident = function (resident_id, onSuccess, onError) {
+            this.getHostWithResidentReq({
+                "resident_id": resident_id
             }, onSuccess, onError);
         };
         Serverville.prototype.createResidentReq = function (request, onSuccess, onError) {

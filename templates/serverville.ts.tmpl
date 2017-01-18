@@ -13,6 +13,7 @@ namespace sv
 	{
 		ServerURL:string;
 		ServerHost:string;
+		ServerProtocol:string;
 
 		SessionId:string;
         
@@ -41,18 +42,25 @@ namespace sv
 		
 		constructor(url:string)
 		{
-			this.ServerURL = url;
 			this.SessionId = localStorage.getItem("SessionId");
+
+			this.initServerUrl(url);
+		}
+
+		private initServerUrl(url:string):void
+		{
+			this.ServerURL = url;
 			var protocolLen:number = this.ServerURL.indexOf("://");
 			if(protocolLen < 2)
 				throw "Malformed url: "+url;
             this.ServerHost = this.ServerURL.substring(protocolLen+3);
-            
-            if(this.ServerURL.substr(0, 5) == "ws://" || this.ServerURL.substr(0, 6) == "wss://")
+            this.ServerProtocol = this.ServerURL.substring(0, protocolLen);
+
+            if(this.ServerProtocol == "ws" || this.ServerProtocol == "wss")
             {
                 this.Transport = new WebSocketTransport(this);
             }
-            else if(this.ServerURL.substr(0, 7) == "http://" || this.ServerURL.substr(0, 8) == "https://")
+            else if(this.ServerProtocol == "http" || this.ServerProtocol == "https")
             {
                 this.Transport = new HttpTransport(this);
             }
@@ -97,6 +105,31 @@ namespace sv
             
 		}
 	
+		switchHosts(host:string, onComplete:(err:ErrorReply)=>void):void
+		{
+			var url:string = host;
+			if(host.indexOf("://") < 0)
+			{
+				url = this.ServerProtocol + "://"+host;
+			}
+
+			if(this.ServerURL == url)
+			{
+				onComplete(null);
+				return;
+			}
+
+			this.shutdown();
+
+			this.initServerUrl(url);
+			this.init(
+				function(user:UserAccountInfo, err:ErrorReply):void
+				{
+					onComplete(err);
+				}
+			);
+		}
+
 		private startPingHeartbeat():void
 		{
 			if(this.PingTimer != 0)

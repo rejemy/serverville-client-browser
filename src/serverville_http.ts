@@ -34,11 +34,11 @@ namespace sv
             if(this.SV.LogMessagesToConsole)
                 console.log("HTTP<- "+body);
             
-			var self:Serverville = this.SV;
+			var self:HttpTransport = this;
 			
 			req.onload = function(ev:Event):void
 			{
-                if(self.LogMessagesToConsole)
+                if(self.SV.LogMessagesToConsole)
                     console.log("HTTP-> "+req.response);
                 
 				if (req.status >= 200 && req.status < 400)
@@ -56,13 +56,13 @@ namespace sv
 					if(onError)
 						onError(error);
 					else
-						self._onServerError(error);
+						self.SV._onServerError(error);
 				}
 
 				if(req.getResponseHeader("X-Notifications"))
 				{
 					// Pending notifications from the server!
-					this.getNotifications();
+					self.getNotifications();
 				}
 				
 			};
@@ -74,7 +74,7 @@ namespace sv
 				if(onError)
 					onError(err);
 				else
-					self._onServerError(err);
+					self.SV._onServerError(err);
 			};
 			
 			req.send(body);
