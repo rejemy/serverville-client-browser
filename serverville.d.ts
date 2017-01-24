@@ -185,6 +185,19 @@ declare namespace sv
 		include_deleted:boolean;
 	}
 
+	export interface PageGlobalKeysRequest
+	{
+		id:string;
+		page_size:number;
+		start_after:string;
+		descending:boolean;
+	}
+
+	export interface OrderedDataReply
+	{
+		values:Array<DataItemReply>;
+	}
+
 	export interface KeyDataRecordRequest
 	{
 		id:string;
@@ -492,6 +505,8 @@ declare namespace sv
 		
         constructor(url:string);
         init(onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void;
+		initWithResidentId(resId:string, onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void;
+		switchHosts(host:string, onComplete:(err:ErrorReply)=>void):void;
 		getServerTime():number;
         loadUserKeyData(onDone?:()=>void):KeyData;
 		loadKeyData(id:string, onDone?:()=>void):KeyData;
@@ -535,6 +550,8 @@ declare namespace sv
 		getDataKeys(id:string, keys:Array<string>, since:number, include_deleted:boolean, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getAllDataKeysReq(request:AllGlobalKeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getAllDataKeys(id:string, since:number, include_deleted:boolean, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		pageAllDataKeysReq(request:PageGlobalKeysRequest, onSuccess?:(reply:OrderedDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		pageAllDataKeys(id:string, page_size:number, start_after:string, descending:boolean, onSuccess?:(reply:OrderedDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getKeyDataRecordReq(request:KeyDataRecordRequest, onSuccess?:(reply:KeyDataInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getKeyDataRecord(id:string, onSuccess?:(reply:KeyDataInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getKeyDataRecordsReq(request:KeyDataRecordsRequest, onSuccess?:(reply:KeyDataRecords)=>void, onError?:(reply:ErrorReply)=>void):void;

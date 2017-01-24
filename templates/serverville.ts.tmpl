@@ -69,7 +69,7 @@ namespace sv
                 throw "Unknown server protocol: "+url;
             }
 		}
-		
+
 		init(onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void
 		{
 			var self:Serverville = this;
@@ -105,13 +105,55 @@ namespace sv
             
 		}
 	
-		switchHosts(host:string, onComplete:(err:ErrorReply)=>void):void
+		initWithResidentId(resId:string, onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void
+		{
+			if(!resId)
+			{
+				this.init(onComplete);
+				return;
+			}
+
+			var serverUrl:string = this.ServerURL;
+			if(this.ServerProtocol == "ws")
+				serverUrl = "http://"+this.ServerHost;
+			else if(this.ServerProtocol == "wss")
+				serverUrl = "https://"+this.ServerHost;
+			
+			serverUrl += "/api/GetHostWithResident";
+			
+			var req:GetHostWithResidentRequest = 
+			{
+				resident_id: resId
+			};
+
+			var self:Serverville = this;
+
+			HttpTransport.unauthedRequest(serverUrl, req,
+				function(reply:GetHostWithResidentReply):void
+				{
+					var url:string = self.fixupServerURL(reply.host);
+					self.initServerUrl(url);
+					self.init(onComplete);
+				},
+				function(err:ErrorReply):void
+				{
+					onComplete(null, err);
+				});
+		}
+
+		private fixupServerURL(host:string):string
 		{
 			var url:string = host;
 			if(host.indexOf("://") < 0)
 			{
 				url = this.ServerProtocol + "://"+host;
 			}
+			return url;
+		}
+
+		switchHosts(host:string, onComplete:(err:ErrorReply)=>void):void
+		{
+			var url:string = this.fixupServerURL(host);
 
 			if(this.ServerURL == url)
 			{
@@ -129,7 +171,6 @@ namespace sv
 				}
 			);
 		}
-
 		private startPingHeartbeat():void
 		{
 			if(this.PingTimer != 0)

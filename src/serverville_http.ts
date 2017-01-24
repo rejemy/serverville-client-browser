@@ -108,5 +108,43 @@ namespace sv
 
 			this.doPost(url, {}, onSuccess, onError);
 		}
+
+		static unauthedRequest(url:string, request:Object, onSuccess:(reply:Object)=>void, onError:(reply:ErrorReply)=>void):void
+        {
+            var req:XMLHttpRequest = new XMLHttpRequest();
+			req.open("POST", url);
+			req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+			var body:string = JSON.stringify(request);
+
+			req.onload = function(ev:Event):void
+			{
+				if (req.status >= 200 && req.status < 400)
+				{
+					var message:Object = JSON.parse(req.response);
+					if(onSuccess)
+					{
+						onSuccess(message);
+					}
+				}
+				else
+				{
+                    var error:ErrorReply = JSON.parse(req.response);
+					
+					if(onError)
+						onError(error);
+				}
+				
+			};
+			
+			req.onerror = function(ev:Event):void
+			{
+                var err:ErrorReply = makeClientError(-2);
+                
+				if(onError)
+					onError(err);
+			};
+			
+			req.send(body);
+        }
     }
 }

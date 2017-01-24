@@ -102,6 +102,31 @@ var sv;
             };
             this.doPost(url, {}, onSuccess, onError);
         };
+        HttpTransport.unauthedRequest = function (url, request, onSuccess, onError) {
+            var req = new XMLHttpRequest();
+            req.open("POST", url);
+            req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            var body = JSON.stringify(request);
+            req.onload = function (ev) {
+                if (req.status >= 200 && req.status < 400) {
+                    var message = JSON.parse(req.response);
+                    if (onSuccess) {
+                        onSuccess(message);
+                    }
+                }
+                else {
+                    var error = JSON.parse(req.response);
+                    if (onError)
+                        onError(error);
+                }
+            };
+            req.onerror = function (ev) {
+                var err = sv_1.makeClientError(-2);
+                if (onError)
+                    onError(err);
+            };
+            req.send(body);
+        };
         return HttpTransport;
     }());
     sv_1.HttpTransport = HttpTransport;
@@ -274,11 +299,38 @@ var sv;
                 }
             });
         };
-        Serverville.prototype.switchHosts = function (host, onComplete) {
+        Serverville.prototype.initWithResidentId = function (resId, onComplete) {
+            if (!resId) {
+                this.init(onComplete);
+                return;
+            }
+            var serverUrl = this.ServerURL;
+            if (this.ServerProtocol == "ws")
+                serverUrl = "http://" + this.ServerHost;
+            else if (this.ServerProtocol == "wss")
+                serverUrl = "https://" + this.ServerHost;
+            serverUrl += "/api/GetHostWithResident";
+            var req = {
+                resident_id: resId
+            };
+            var self = this;
+            sv.HttpTransport.unauthedRequest(serverUrl, req, function (reply) {
+                var url = self.fixupServerURL(reply.host);
+                self.initServerUrl(url);
+                self.init(onComplete);
+            }, function (err) {
+                onComplete(null, err);
+            });
+        };
+        Serverville.prototype.fixupServerURL = function (host) {
             var url = host;
             if (host.indexOf("://") < 0) {
                 url = this.ServerProtocol + "://" + host;
             }
+            return url;
+        };
+        Serverville.prototype.switchHosts = function (host, onComplete) {
+            var url = this.fixupServerURL(host);
             if (this.ServerURL == url) {
                 onComplete(null);
                 return;
@@ -591,6 +643,17 @@ var sv;
                 "id": id,
                 "since": since,
                 "include_deleted": include_deleted
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.pageAllDataKeysReq = function (request, onSuccess, onError) {
+            this.apiByName("PageAllDataKeys", request, onSuccess, onError);
+        };
+        Serverville.prototype.pageAllDataKeys = function (id, page_size, start_after, descending, onSuccess, onError) {
+            this.pageAllDataKeysReq({
+                "id": id,
+                "page_size": page_size,
+                "start_after": start_after,
+                "descending": descending
             }, onSuccess, onError);
         };
         Serverville.prototype.getKeyDataRecordReq = function (request, onSuccess, onError) {

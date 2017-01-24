@@ -30,6 +30,8 @@ declare namespace sv
 		
         constructor(url:string);
         init(onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void;
+		initWithResidentId(resId:string, onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void;
+		switchHosts(host:string, onComplete:(err:ErrorReply)=>void):void;
 		getServerTime():number;
         loadUserKeyData(onDone?:()=>void):KeyData;
 		loadKeyData(id:string, onDone?:()=>void):KeyData;

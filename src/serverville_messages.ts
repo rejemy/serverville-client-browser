@@ -182,6 +182,19 @@ namespace sv
 		include_deleted:boolean;
 	}
 
+	export interface PageGlobalKeysRequest
+	{
+		id:string;
+		page_size:number;
+		start_after:string;
+		descending:boolean;
+	}
+
+	export interface OrderedDataReply
+	{
+		values:Array<DataItemReply>;
+	}
+
 	export interface KeyDataRecordRequest
 	{
 		id:string;
