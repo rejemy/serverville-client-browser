@@ -368,6 +368,10 @@ var sv;
                 this.setServerTime(userInfo.time);
             }
         };
+        Serverville.prototype.setUserSession = function (sessionId) {
+            this.SessionId = sessionId;
+            localStorage.setItem("SessionId", this.SessionId);
+        };
         Serverville.prototype.userInfo = function () {
             return this.UserInfo;
         };
@@ -541,6 +545,18 @@ var sv;
                 "invite_code": invite_code,
                 "language": language,
                 "country": country
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.changePasswordReq = function (request, onSuccess, onError) {
+            var self = this;
+            this.apiByName("ChangePassword", request, function (reply) { self.setUserSession(reply.session_id); if (onSuccess) {
+                onSuccess(reply);
+            } }, onError);
+        };
+        Serverville.prototype.changePassword = function (old_password, new_password, onSuccess, onError) {
+            this.changePasswordReq({
+                "old_password": old_password,
+                "new_password": new_password
             }, onSuccess, onError);
         };
         Serverville.prototype.getTimeReq = function (request, onSuccess, onError) {

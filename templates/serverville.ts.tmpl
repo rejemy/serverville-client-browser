@@ -211,6 +211,12 @@ namespace sv
 			}
 		}
 		
+		private setUserSession(sessionId:string):void
+		{
+			this.SessionId = sessionId;
+			localStorage.setItem("SessionId", this.SessionId);
+		}	
+		
 		userInfo():UserAccountInfo
 		{
 			return this.UserInfo;

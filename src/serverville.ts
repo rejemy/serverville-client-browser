@@ -211,6 +211,12 @@ namespace sv
 			}
 		}
 		
+		private setUserSession(sessionId:string):void
+		{
+			this.SessionId = sessionId;
+			localStorage.setItem("SessionId", this.SessionId);
+		}	
+		
 		userInfo():UserAccountInfo
 		{
 			return this.UserInfo;
@@ -480,6 +486,28 @@ namespace sv
 					"invite_code":invite_code,
 					"language":language,
 					"country":country
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		changePasswordReq(request:ChangePasswordRequest, onSuccess?:(reply:ChangePasswordReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            var self:Serverville = this;
+			this.apiByName("ChangePassword",
+				request,
+				function(reply:ChangePasswordReply):void { self.setUserSession(reply.session_id); if(onSuccess) { onSuccess(reply);} },
+				onError
+			);
+		}
+
+		changePassword(old_password:string, new_password:string, onSuccess?:(reply:ChangePasswordReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.changePasswordReq(
+				{
+					"old_password":old_password,
+					"new_password":new_password
 				},
 				onSuccess,
 				onError

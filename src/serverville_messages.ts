@@ -45,6 +45,17 @@ namespace sv
 		country:string;
 	}
 
+	export interface ChangePasswordRequest
+	{
+		old_password:string;
+		new_password:string;
+	}
+
+	export interface ChangePasswordReply
+	{
+		session_id:string;
+	}
+
 	export interface EmptyClientRequest
 	{
 	}

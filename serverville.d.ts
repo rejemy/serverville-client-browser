@@ -48,6 +48,17 @@ declare namespace sv
 		country:string;
 	}
 
+	export interface ChangePasswordRequest
+	{
+		old_password:string;
+		new_password:string;
+	}
+
+	export interface ChangePasswordReply
+	{
+		session_id:string;
+	}
+
 	export interface EmptyClientRequest
 	{
 	}
@@ -526,6 +537,8 @@ declare namespace sv
 		createAccount(username:string, email:string, password:string, invite_code:string, language:string, country:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		convertToFullAccountReq(request:CreateAccount, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		convertToFullAccount(username:string, email:string, password:string, invite_code:string, language:string, country:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		changePasswordReq(request:ChangePasswordRequest, onSuccess?:(reply:ChangePasswordReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		changePassword(old_password:string, new_password:string, onSuccess?:(reply:ChangePasswordReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getTimeReq(request:EmptyClientRequest, onSuccess?:(reply:ServerTime)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getTime(onSuccess?:(reply:ServerTime)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getUserInfoReq(request:GetUserInfo, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
