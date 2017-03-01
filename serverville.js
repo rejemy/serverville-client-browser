@@ -478,6 +478,15 @@ var sv;
             this.Transport.callApi(api, request, onSuccess, onError);
             this.LastSend = performance.now();
         };
+        Serverville.prototype.setLocaleReq = function (request, onSuccess, onError) {
+            this.apiByName("SetLocale", request, onSuccess, onError);
+        };
+        Serverville.prototype.setLocale = function (country, language, onSuccess, onError) {
+            this.setLocaleReq({
+                "country": country,
+                "language": language
+            }, onSuccess, onError);
+        };
         Serverville.prototype.signInReq = function (request, onSuccess, onError) {
             var self = this;
             this.apiByName("SignIn", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
@@ -571,15 +580,6 @@ var sv;
         Serverville.prototype.getUserInfo = function (onSuccess, onError) {
             this.getUserInfoReq({}, onSuccess, onError);
         };
-        Serverville.prototype.setLocaleReq = function (request, onSuccess, onError) {
-            this.apiByName("SetLocale", request, onSuccess, onError);
-        };
-        Serverville.prototype.setLocale = function (country, language, onSuccess, onError) {
-            this.setLocaleReq({
-                "country": country,
-                "language": language
-            }, onSuccess, onError);
-        };
         Serverville.prototype.getUserDataComboReq = function (request, onSuccess, onError) {
             this.apiByName("GetUserDataCombo", request, onSuccess, onError);
         };
@@ -604,6 +604,15 @@ var sv;
         Serverville.prototype.setUserKeys = function (values, onSuccess, onError) {
             this.setUserKeysReq({
                 "values": values
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.setAndDeleteUserKeysReq = function (request, onSuccess, onError) {
+            this.apiByName("SetAndDeleteUserKeys", request, onSuccess, onError);
+        };
+        Serverville.prototype.setAndDeleteUserKeys = function (values, delete_keys, onSuccess, onError) {
+            this.setAndDeleteUserKeysReq({
+                "values": values,
+                "delete_keys": delete_keys
             }, onSuccess, onError);
         };
         Serverville.prototype.getUserKeyReq = function (request, onSuccess, onError) {
@@ -957,6 +966,7 @@ var sv;
             this.data = {};
             this.data_info = {};
             this.local_dirty = {};
+            this.local_deletes = {};
             this.most_recent = 0;
         }
         KeyData.prototype.loadKeys = function (keys, onDone) {
@@ -977,6 +987,7 @@ var sv;
         KeyData.prototype.loadAll = function (onDone) {
             this.data = {};
             this.local_dirty = {};
+            this.local_deletes = {};
             var self = this;
             this.server.getAllDataKeys(this.id, 0, false, function (reply) {
                 self.data_info = reply.values;
@@ -1041,27 +1052,48 @@ var sv;
                 this.data_info[key] = info;
             }
             this.local_dirty[key] = info;
+            delete this.local_deletes[key];
+        };
+        KeyData.prototype.delete = function (key) {
+            var user = this.server.userInfo();
+            if (user == null || user.user_id != this.id)
+                throw "Read-only data!";
+            var info = this.data_info[key];
+            if (!info)
+                return;
+            delete this.data[key];
+            delete this.data_info[key];
+            this.local_deletes[key] = info;
         };
         KeyData.prototype.save = function (onDone) {
             var user = this.server.userInfo();
             if (user == null || user.user_id != this.id)
                 throw "Read-only data!";
-            var saveSet = [];
+            var saveSet = null;
+            var deleteSet = null;
             for (var key in this.local_dirty) {
                 var info = this.local_dirty[key];
+                if (saveSet == null)
+                    saveSet = [];
                 saveSet.push({
                     "key": info.key,
                     "value": info.value,
                     "data_type": info.data_type
                 });
             }
-            this.server.setUserKeys(saveSet, function (reply) {
+            for (var key in this.local_deletes) {
+                if (deleteSet == null)
+                    deleteSet = [];
+                deleteSet.push(key);
+            }
+            this.server.setAndDeleteUserKeys(saveSet, deleteSet, function (reply) {
                 this.local_dirty = {};
+                this.local_deletes = {};
                 if (onDone)
-                    onDone();
+                    onDone(null);
             }, function (reply) {
                 if (onDone)
-                    onDone();
+                    onDone(reply);
             });
         };
         return KeyData;

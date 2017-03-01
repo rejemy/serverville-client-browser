@@ -4,6 +4,16 @@
 namespace sv
 {
 
+	export interface SetLocaleRequest
+	{
+		country:string;
+		language:string;
+	}
+
+	export interface EmptyClientReply
+	{
+	}
+
 	export interface SignIn
 	{
 		username:string;
@@ -78,16 +88,6 @@ namespace sv
 		admin_level:number;
 	}
 
-	export interface SetLocaleRequest
-	{
-		country:string;
-		language:string;
-	}
-
-	export interface EmptyClientReply
-	{
-	}
-
 	export interface GetUserDataComboRequest
 	{
 		since:number;
@@ -149,6 +149,12 @@ namespace sv
 	export interface UserDataRequestList
 	{
 		values:Array<SetUserDataRequest>;
+	}
+
+	export interface UserDataSetAndDeleteRequestList
+	{
+		values:Array<SetUserDataRequest>;
+		delete_keys:Array<string>;
 	}
 
 	export interface KeyRequest

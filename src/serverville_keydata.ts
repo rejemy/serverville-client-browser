@@ -9,6 +9,7 @@ namespace sv
 		data:any;
 		private data_info:{[key:string]:DataItemReply};
 		private local_dirty:{[key:string]:DataItemReply};
+		private local_deletes:{[key:string]:DataItemReply};
 		private most_recent:number;
 		
 		constructor(server:Serverville, id:string)
@@ -22,6 +23,7 @@ namespace sv
 			this.data = {};
 			this.data_info = {};
 			this.local_dirty = {};
+			this.local_deletes = {};
 			
 			this.most_recent = 0;
 		}
@@ -55,7 +57,8 @@ namespace sv
 		{
 			this.data = {};
 			this.local_dirty = {};
-			
+			this.local_deletes = {};
+
 			var self:KeyData = this;
 			this.server.getAllDataKeys(this.id, 0, false,
 				function(reply:UserDataReply):void
@@ -145,20 +148,41 @@ namespace sv
 				this.data_info[key] = info;
 			}
 			this.local_dirty[key] = info;
+
+			delete this.local_deletes[key];
 		}
 		
-		save(onDone?:()=>void):void
+		delete(key:string):void
+		{
+			var user:UserAccountInfo = this.server.userInfo();
+			if(user == null || user.user_id != this.id)
+				throw "Read-only data!";
+			
+			var info:DataItemReply = this.data_info[key];
+			if(!info)
+				return;
+
+			delete this.data[key];
+			delete this.data_info[key];
+
+			this.local_deletes[key] = info;
+		}
+
+		save(onDone?:(reply:ErrorReply)=>void):void
 		{
 			var user:UserAccountInfo = this.server.userInfo();
 			if(user == null || user.user_id != this.id)
 				throw "Read-only data!";
 				
-			var saveSet:SetUserDataRequest[] = [];
+			var saveSet:SetUserDataRequest[] = null;
+			var deleteSet:string[] = null;
 			
 			for(var key in this.local_dirty)
 			{
 				var info:DataItemReply = this.local_dirty[key];
-	
+				if(saveSet == null)
+					saveSet = [];
+
 				saveSet.push(
 					{
 						"key":info.key,
@@ -167,19 +191,28 @@ namespace sv
 					}
 				);
 			}
+
+			for(var key in this.local_deletes)
+			{
+				if(deleteSet == null)
+					deleteSet = [];
+					
+				deleteSet.push(key);
+			}
 			
-			this.server.setUserKeys(saveSet,
+			this.server.setAndDeleteUserKeys(saveSet, deleteSet,
 				function(reply:SetDataReply):void
 				{
 					this.local_dirty = {};
+					this.local_deletes = {};
 					
 					if(onDone)
-						onDone();
+						onDone(null);
 				},
 				function(reply:ErrorReply):void
 				{
 					if(onDone)
-						onDone();
+						onDone(reply);
 				}
 			);
 

@@ -373,6 +373,28 @@ namespace sv
 			this.LastSend = performance.now();
 		}
         
+		setLocaleReq(request:SetLocaleRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("SetLocale",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		setLocale(country:string, language:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.setLocaleReq(
+				{
+					"country":country,
+					"language":language
+				},
+				onSuccess,
+				onError
+			);
+		}
+
 		signInReq(request:SignIn, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
@@ -556,28 +578,6 @@ namespace sv
 			);
 		}
 
-		setLocaleReq(request:SetLocaleRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
-		{
-            
-			this.apiByName("SetLocale",
-				request,
-				onSuccess,
-				onError
-			);
-		}
-
-		setLocale(country:string, language:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
-		{
-			this.setLocaleReq(
-				{
-					"country":country,
-					"language":language
-				},
-				onSuccess,
-				onError
-			);
-		}
-
 		getUserDataComboReq(request:GetUserDataComboRequest, onSuccess?:(reply:GetUserDataComboReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
@@ -637,6 +637,28 @@ namespace sv
 			this.setUserKeysReq(
 				{
 					"values":values
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		setAndDeleteUserKeysReq(request:UserDataSetAndDeleteRequestList, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("SetAndDeleteUserKeys",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		setAndDeleteUserKeys(values:Array<SetUserDataRequest>, delete_keys:Array<string>, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.setAndDeleteUserKeysReq(
+				{
+					"values":values,
+					"delete_keys":delete_keys
 				},
 				onSuccess,
 				onError
