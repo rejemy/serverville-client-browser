@@ -707,6 +707,48 @@ namespace sv
 			);
 		}
 
+		deleteUserKeyReq(request:DeleteKeyRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("DeleteUserKey",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		deleteUserKey(key:string, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.deleteUserKeyReq(
+				{
+					"key":key
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		deleteUserKeysReq(request:DeleteKeysRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("DeleteUserKeys",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		deleteUserKeys(keys:Array<string>, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.deleteUserKeysReq(
+				{
+					"keys":keys
+				},
+				onSuccess,
+				onError
+			);
+		}
+
 		getDataKeyReq(request:GlobalKeyRequest, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             

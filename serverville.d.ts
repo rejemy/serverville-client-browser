@@ -175,6 +175,16 @@ declare namespace sv
 		since:number;
 	}
 
+	export interface DeleteKeyRequest
+	{
+		key:string;
+	}
+
+	export interface DeleteKeysRequest
+	{
+		keys:Array<string>;
+	}
+
 	export interface GlobalKeyRequest
 	{
 		id:string;
@@ -557,6 +567,10 @@ declare namespace sv
 		getUserKeys(keys:Array<string>, since:number, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getAllUserKeysReq(request:AllKeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getAllUserKeys(since:number, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		deleteUserKeyReq(request:DeleteKeyRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		deleteUserKey(key:string, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		deleteUserKeysReq(request:DeleteKeysRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		deleteUserKeys(keys:Array<string>, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getDataKeyReq(request:GlobalKeyRequest, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getDataKey(id:string, key:string, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getDataKeysReq(request:GlobalKeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;

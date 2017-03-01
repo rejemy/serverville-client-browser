@@ -631,6 +631,22 @@ var sv;
                 "since": since
             }, onSuccess, onError);
         };
+        Serverville.prototype.deleteUserKeyReq = function (request, onSuccess, onError) {
+            this.apiByName("DeleteUserKey", request, onSuccess, onError);
+        };
+        Serverville.prototype.deleteUserKey = function (key, onSuccess, onError) {
+            this.deleteUserKeyReq({
+                "key": key
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.deleteUserKeysReq = function (request, onSuccess, onError) {
+            this.apiByName("DeleteUserKeys", request, onSuccess, onError);
+        };
+        Serverville.prototype.deleteUserKeys = function (keys, onSuccess, onError) {
+            this.deleteUserKeysReq({
+                "keys": keys
+            }, onSuccess, onError);
+        };
         Serverville.prototype.getDataKeyReq = function (request, onSuccess, onError) {
             this.apiByName("GetDataKey", request, onSuccess, onError);
         };

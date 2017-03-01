@@ -172,6 +172,16 @@ namespace sv
 		since:number;
 	}
 
+	export interface DeleteKeyRequest
+	{
+		key:string;
+	}
+
+	export interface DeleteKeysRequest
+	{
+		keys:Array<string>;
+	}
+
 	export interface GlobalKeyRequest
 	{
 		id:string;
