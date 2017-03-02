@@ -20,7 +20,7 @@ namespace sv
 		private UserInfo:UserAccountInfo;
 	
         LogMessagesToConsole:boolean = false;
-        PingPeriod:number = 5000;
+        PingPeriod:number = 60000;
 
         private Transport:ServervilleTransport;
         
@@ -373,51 +373,6 @@ namespace sv
 			this.LastSend = performance.now();
 		}
         
-		setLocaleReq(request:SetLocaleRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
-		{
-            
-			this.apiByName("SetLocale",
-				request,
-				onSuccess,
-				onError
-			);
-		}
-
-		setLocale(country:string, language:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
-		{
-			this.setLocaleReq(
-				{
-					"country":country,
-					"language":language
-				},
-				onSuccess,
-				onError
-			);
-		}
-
-		signInReq(request:SignIn, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
-		{
-            var self:Serverville = this;
-			this.apiByName("SignIn",
-				request,
-				function(reply:SignInReply):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
-				onError
-			);
-		}
-
-		signIn(username:string, email:string, password:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
-		{
-			this.signInReq(
-				{
-					"username":username,
-					"email":email,
-					"password":password
-				},
-				onSuccess,
-				onError
-			);
-		}
-
 		validateSessionReq(request:ValidateSessionRequest, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
@@ -572,6 +527,28 @@ namespace sv
 			this.getUserInfoReq(
 				{
 
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		setLocaleReq(request:SetLocaleRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("SetLocale",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		setLocale(country:string, language:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.setLocaleReq(
+				{
+					"country":country,
+					"language":language
 				},
 				onSuccess,
 				onError
@@ -787,6 +764,29 @@ namespace sv
 				{
 					"id":id,
 					"key":key
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		signInReq(request:SignIn, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            var self:Serverville = this;
+			this.apiByName("SignIn",
+				request,
+				function(reply:SignInReply):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
+				onError
+			);
+		}
+
+		signIn(username:string, email:string, password:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.signInReq(
+				{
+					"username":username,
+					"email":email,
+					"password":password
 				},
 				onSuccess,
 				onError
