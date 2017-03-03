@@ -13,8 +13,14 @@ namespace sv
         
         init(onConnected:(err:ErrorReply)=>void)
         {
-            if(onConnected != null)
-                onConnected(null);
+			this.callApi("GetTime", {},
+				function(reply:ServerTime):void
+				{
+					 if(onConnected != null)
+                		onConnected(null);
+				},
+				onConnected
+			);
         }
         
 		callApi(api:string, request:Object, onSuccess:(reply:Object)=>void, onError:(reply:ErrorReply)=>void):void
