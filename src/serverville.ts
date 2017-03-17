@@ -74,10 +74,19 @@ namespace sv
 		{
 			var self:Serverville = this;
 			
-            this.Transport.init(function(err:ErrorReply):void
+            function onTransportInitted(err:ErrorReply):void
             {
                 if(err != null)
                 {
+					if(self.SessionId && err.errorCode == 2 || err.errorCode == 19)
+					{
+						self.setUserInfo(null);
+
+						// Try again
+						self.Transport.init(onTransportInitted);
+						return;
+					}
+
                     onComplete(null, err);
                     return;
                 }
@@ -101,8 +110,9 @@ namespace sv
                 {
                     onComplete(null, null);
                 }
-            });
+            };
             
+			this.Transport.init(onTransportInitted);
 		}
 	
 		initWithResidentId(resId:string, onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void
@@ -171,6 +181,7 @@ namespace sv
 				}
 			);
 		}
+
 		private startPingHeartbeat():void
 		{
 			if(this.PingTimer != 0)
@@ -224,13 +235,20 @@ namespace sv
 		
 		_onServerError(err:ErrorReply):void
 		{
-			if(this.GlobalErrorHandler != null)
-				this.GlobalErrorHandler(err);
-
-			if(err.errorCode == 19) // Session expired
+			if(err.errorCode < 0)
 			{
+				// Network error
 				this.shutdown();
 			}
+
+			if(err.errorCode == 2 || err.errorCode == 19) // Session expired
+			{
+				this.setUserInfo(null);
+				this.shutdown();
+			}
+
+			if(this.GlobalErrorHandler != null)
+				this.GlobalErrorHandler(err);
 		}
 		
 		_onServerNotification(notificationType:string, notificationJson:string):void
