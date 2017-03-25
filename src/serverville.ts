@@ -184,7 +184,7 @@ namespace sv
 
 		private startPingHeartbeat():void
 		{
-			if(this.PingTimer != 0)
+			if(this.PingPeriod == 0 || this.PingTimer != 0)
 				return;
 
 			var self:Serverville = this;
@@ -321,6 +321,14 @@ namespace sv
 			this.getTime(function(reply:ServerTime):void
 			{
 				self.setServerTime(reply.time);
+			},
+			function(err:ErrorReply):void
+			{
+				if(err.errorCode <= 0)
+				{
+					// Network error, stop pinging until we make another real request
+					self.shutdown();
+				}
 			});
 		}
 
@@ -382,15 +390,23 @@ namespace sv
 
         apiByName(api:string, request:Object, onSuccess:(reply:Object)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
+			var self:Serverville = this;
 			this.Transport.callApi(api,
 				request,
-				onSuccess,
+				function(reply:Object):void
+				{
+					self.startPingHeartbeat();
+					if(onSuccess)
+						onSuccess(reply);
+				},
 				onError
 			);
 
 			this.LastSend = performance.now();
 		}
         
+		// Start generated code -----------------------------------------------------------------------------------
+
 		validateSessionReq(request:ValidateSessionRequest, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;

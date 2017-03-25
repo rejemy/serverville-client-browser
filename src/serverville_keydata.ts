@@ -8,8 +8,8 @@ namespace sv
 		server:Serverville;
 		data:any;
 		private data_info:{[key:string]:DataItemReply};
-		private local_dirty:{[key:string]:DataItemReply};
-		private local_deletes:{[key:string]:DataItemReply};
+		private local_dirty:{[key:string]:boolean};
+		private local_deletes:{[key:string]:boolean};
 		private most_recent:number;
 		
 		constructor(server:Serverville, id:string)
@@ -28,6 +28,8 @@ namespace sv
 			this.most_recent = 0;
 		}
 		
+		mostRecentModifiedTime():number { return this.most_recent; }
+
 		loadKeys(keys:string[], onDone?:()=>void):void
 		{
 			var self:KeyData = this;
@@ -147,7 +149,7 @@ namespace sv
 				};
 				this.data_info[key] = info;
 			}
-			this.local_dirty[key] = info;
+			this.local_dirty[key] = true;
 
 			delete this.local_deletes[key];
 		}
@@ -165,7 +167,7 @@ namespace sv
 			delete this.data[key];
 			delete this.data_info[key];
 
-			this.local_deletes[key] = info;
+			this.local_deletes[key] = true;
 		}
 
 		save(onDone?:(reply:ErrorReply)=>void):void
@@ -179,7 +181,7 @@ namespace sv
 			
 			for(var key in this.local_dirty)
 			{
-				var info:DataItemReply = this.local_dirty[key];
+				var info:DataItemReply = this.data_info[key];
 				if(saveSet == null)
 					saveSet = [];
 
@@ -215,8 +217,39 @@ namespace sv
 						onDone(reply);
 				}
 			);
+		}
 
-			
+		stringify():string
+		{
+			var temp:object =
+			{
+				id: this.id,
+				data: this.data_info,
+				dirty: this.local_dirty,
+				deleted: this.local_deletes	
+			};
+
+			return JSON.stringify(temp);
+		}
+
+		static fromJson(json:string, server:Serverville):KeyData
+		{
+			var temp:any = JSON.parse(json);
+
+			var keydata:KeyData = new KeyData(server, temp.id);
+			keydata.data_info = temp.data;
+			keydata.local_dirty = temp.dirty;
+			keydata.local_deletes = temp.deleted;
+
+			for(var key in keydata.data_info)
+			{
+				var dataInfo:DataItemReply = keydata.data_info[key];
+				keydata.data[key] = dataInfo.value;
+				if(dataInfo.modified > keydata.most_recent)
+					keydata.most_recent = dataInfo.modified;
+			}
+
+			return keydata;
 		}
 	}
 }

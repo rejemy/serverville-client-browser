@@ -55,40 +55,65 @@ namespace sv
         
         public callApi(api:string, request:Object, onSuccess:(reply:Object)=>void, onError:(reply:ErrorReply)=>void):void
         {
-            var messageNum:string = (this.MessageSequence++).toString();
-			var message:string = api+":"+messageNum+":"+JSON.stringify(request);
-            
-            if(this.SV.LogMessagesToConsole)
-                console.log("WS<- "+message);
-            
-            var self:Serverville = this.SV;
-            
-            var callback:ServervilleWSReplyHandler = function(isError:boolean, reply:Object):void
+            var self:WebSocketTransport = this;
+            if(this.Connected)
             {
-                if(isError)
+                sendMessage();
+            }
+            else
+            {
+                this.init(function(err:ErrorReply):void
                 {
-                    if(onError)
-                        onError(<ErrorReply>reply);
+                    if(err)
+                    {
+                        if(onError)
+                            onError(err);
+                    }
                     else
-    					self._onServerError(<ErrorReply>reply);                
-                }
-                else
+                    {
+                        sendMessage();
+                    }
+                });
+            }
+
+            function sendMessage()
+            {
+                var messageNum:string = (self.MessageSequence++).toString();
+                var message:string = api+":"+messageNum+":"+JSON.stringify(request);
+                
+                if(self.SV.LogMessagesToConsole)
+                    console.log("WS<- "+message);
+                
+                var callback:ServervilleWSReplyHandler = function(isError:boolean, reply:Object):void
                 {
-                    if(onSuccess)
-                        onSuccess(reply);
-                }
-            };
-            
-            this.ReplyCallbacks[messageNum] = callback;
-            
-			this.ServerSocket.send(message);
+                    if(isError)
+                    {
+                        if(onError)
+                            onError(<ErrorReply>reply);
+                        else
+                            self.SV._onServerError(<ErrorReply>reply);                
+                    }
+                    else
+                    {
+                        if(onSuccess)
+                            onSuccess(reply);
+                    }
+                };
+                
+                self.ReplyCallbacks[messageNum] = callback;
+                
+                self.ServerSocket.send(message);
+            }
         }     
 
         public close():void
         {
             this.Connected = false;
             if(this.ServerSocket)
+            {
                 this.ServerSocket.close();
+                this.ServerSocket = null;
+            }
         }
 
         private onWSClosed(evt:CloseEvent):void
