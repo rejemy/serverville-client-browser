@@ -78,15 +78,6 @@ namespace sv
             {
                 if(err != null)
                 {
-					if(self.SessionId && err.errorCode == 2 || err.errorCode == 19)
-					{
-						self.setUserInfo(null);
-
-						// Try again
-						self.Transport.init(onTransportInitted);
-						return;
-					}
-
                     onComplete(null, err);
                     return;
                 }
@@ -102,7 +93,15 @@ namespace sv
                     },
                     function(err:ErrorReply):void
                     {
-                        self.signOut();
+						if(self.SessionId && err.errorCode == 2)
+						{
+							self.signOut();
+
+							// Try again
+							self.Transport.init(onTransportInitted);
+							return;
+						}
+                        
                         onComplete(null, err);
                     });
                 }
@@ -241,9 +240,13 @@ namespace sv
 				this.shutdown();
 			}
 
-			if(err.errorCode == 2 || err.errorCode == 19) // Session expired
+			if(err.errorCode == 2) // Bad auth
 			{
 				this.setUserInfo(null);
+				this.shutdown();
+			}
+			else if(err.errorCode == 19)
+			{
 				this.shutdown();
 			}
 
