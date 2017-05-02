@@ -39,8 +39,10 @@ var sv;
             this.SV = sv;
         }
         HttpTransport.prototype.init = function (onConnected) {
-            if (onConnected != null)
-                onConnected(null);
+            this.callApi("GetTime", {}, function (reply) {
+                if (onConnected != null)
+                    onConnected(null);
+            }, onConnected);
         };
         HttpTransport.prototype.callApi = function (api, request, onSuccess, onError) {
             this.doPost(this.SV.ServerURL + "/api/" + api, request, onSuccess, onError);
@@ -163,30 +165,48 @@ var sv;
             };
         };
         WebSocketTransport.prototype.callApi = function (api, request, onSuccess, onError) {
-            var messageNum = (this.MessageSequence++).toString();
-            var message = api + ":" + messageNum + ":" + JSON.stringify(request);
-            if (this.SV.LogMessagesToConsole)
-                console.log("WS<- " + message);
-            var self = this.SV;
-            var callback = function (isError, reply) {
-                if (isError) {
-                    if (onError)
-                        onError(reply);
-                    else
-                        self._onServerError(reply);
-                }
-                else {
-                    if (onSuccess)
-                        onSuccess(reply);
-                }
-            };
-            this.ReplyCallbacks[messageNum] = callback;
-            this.ServerSocket.send(message);
+            var self = this;
+            if (this.Connected) {
+                sendMessage();
+            }
+            else {
+                this.init(function (err) {
+                    if (err) {
+                        if (onError)
+                            onError(err);
+                    }
+                    else {
+                        sendMessage();
+                    }
+                });
+            }
+            function sendMessage() {
+                var messageNum = (self.MessageSequence++).toString();
+                var message = api + ":" + messageNum + ":" + JSON.stringify(request);
+                if (self.SV.LogMessagesToConsole)
+                    console.log("WS<- " + message);
+                var callback = function (isError, reply) {
+                    if (isError) {
+                        if (onError)
+                            onError(reply);
+                        else
+                            self.SV._onServerError(reply);
+                    }
+                    else {
+                        if (onSuccess)
+                            onSuccess(reply);
+                    }
+                };
+                self.ReplyCallbacks[messageNum] = callback;
+                self.ServerSocket.send(message);
+            }
         };
         WebSocketTransport.prototype.close = function () {
             this.Connected = false;
-            if (this.ServerSocket)
+            if (this.ServerSocket) {
                 this.ServerSocket.close();
+                this.ServerSocket = null;
+            }
         };
         WebSocketTransport.prototype.onWSClosed = function (evt) {
             if (this.Connected == false) {
@@ -252,7 +272,7 @@ var sv;
     var Serverville = (function () {
         function Serverville(url) {
             this.LogMessagesToConsole = false;
-            this.PingPeriod = 5000;
+            this.PingPeriod = 60000;
             this.UserMessageTypeHandlers = {};
             this.LastSend = 0;
             this.PingTimer = 0;
@@ -280,7 +300,7 @@ var sv;
         };
         Serverville.prototype.init = function (onComplete) {
             var self = this;
-            this.Transport.init(function (err) {
+            function onTransportInitted(err) {
                 if (err != null) {
                     onComplete(null, err);
                     return;
@@ -290,14 +310,21 @@ var sv;
                         onComplete(reply, null);
                         self.startPingHeartbeat();
                     }, function (err) {
-                        self.signOut();
+                        if (self.SessionId && err.errorCode == 2) {
+                            self.signOut();
+                            // Try again
+                            self.Transport.init(onTransportInitted);
+                            return;
+                        }
                         onComplete(null, err);
                     });
                 }
                 else {
                     onComplete(null, null);
                 }
-            });
+            }
+            ;
+            this.Transport.init(onTransportInitted);
         };
         Serverville.prototype.initWithResidentId = function (resId, onComplete) {
             if (!resId) {
@@ -342,7 +369,7 @@ var sv;
             });
         };
         Serverville.prototype.startPingHeartbeat = function () {
-            if (this.PingTimer != 0)
+            if (this.PingPeriod == 0 || this.PingTimer != 0)
                 return;
             var self = this;
             this.PingTimer = window.setInterval(function () {
@@ -376,11 +403,19 @@ var sv;
             return this.UserInfo;
         };
         Serverville.prototype._onServerError = function (err) {
-            if (this.GlobalErrorHandler != null)
-                this.GlobalErrorHandler(err);
-            if (err.errorCode == 19) {
+            if (err.errorCode < 0) {
+                // Network error
                 this.shutdown();
             }
+            if (err.errorCode == 2) {
+                this.setUserInfo(null);
+                this.shutdown();
+            }
+            else if (err.errorCode == 19) {
+                this.shutdown();
+            }
+            if (this.GlobalErrorHandler != null)
+                this.GlobalErrorHandler(err);
         };
         Serverville.prototype._onServerNotification = function (notificationType, notificationJson) {
             var notification = JSON.parse(notificationJson);
@@ -436,6 +471,11 @@ var sv;
             var self = this;
             this.getTime(function (reply) {
                 self.setServerTime(reply.time);
+            }, function (err) {
+                if (err.errorCode <= 0) {
+                    // Network error, stop pinging until we make another real request
+                    self.shutdown();
+                }
             });
         };
         Serverville.prototype.setServerTime = function (time) {
@@ -475,18 +515,15 @@ var sv;
             }
         };
         Serverville.prototype.apiByName = function (api, request, onSuccess, onError) {
-            this.Transport.callApi(api, request, onSuccess, onError);
+            var self = this;
+            this.Transport.callApi(api, request, function (reply) {
+                self.startPingHeartbeat();
+                if (onSuccess)
+                    onSuccess(reply);
+            }, onError);
             this.LastSend = performance.now();
         };
-        Serverville.prototype.setLocaleReq = function (request, onSuccess, onError) {
-            this.apiByName("SetLocale", request, onSuccess, onError);
-        };
-        Serverville.prototype.setLocale = function (country, language, onSuccess, onError) {
-            this.setLocaleReq({
-                "country": country,
-                "language": language
-            }, onSuccess, onError);
-        };
+        // Start generated code -----------------------------------------------------------------------------------
         Serverville.prototype.signInReq = function (request, onSuccess, onError) {
             var self = this;
             this.apiByName("SignIn", request, function (reply) { self.setUserInfo(reply); if (onSuccess) {
@@ -580,6 +617,15 @@ var sv;
         Serverville.prototype.getUserInfo = function (onSuccess, onError) {
             this.getUserInfoReq({}, onSuccess, onError);
         };
+        Serverville.prototype.setLocaleReq = function (request, onSuccess, onError) {
+            this.apiByName("SetLocale", request, onSuccess, onError);
+        };
+        Serverville.prototype.setLocale = function (country, language, onSuccess, onError) {
+            this.setLocaleReq({
+                "country": country,
+                "language": language
+            }, onSuccess, onError);
+        };
         Serverville.prototype.getUserDataComboReq = function (request, onSuccess, onError) {
             this.apiByName("GetUserDataCombo", request, onSuccess, onError);
         };
@@ -672,6 +718,17 @@ var sv;
             this.getDataKeysReq({
                 "id": id,
                 "keys": keys,
+                "since": since,
+                "include_deleted": include_deleted
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.getDataKeysStartingWithReq = function (request, onSuccess, onError) {
+            this.apiByName("GetDataKeysStartingWith", request, onSuccess, onError);
+        };
+        Serverville.prototype.getDataKeysStartingWith = function (id, prefix, since, include_deleted, onSuccess, onError) {
+            this.getDataKeysStartingWithReq({
+                "id": id,
+                "prefix": prefix,
                 "since": since,
                 "include_deleted": include_deleted
             }, onSuccess, onError);
@@ -877,6 +934,16 @@ var sv;
                 "channel_id": channel_id
             }, onSuccess, onError);
         };
+        Serverville.prototype.updateWorldListeningZonesReq = function (request, onSuccess, onError) {
+            this.apiByName("UpdateWorldListeningZones", request, onSuccess, onError);
+        };
+        Serverville.prototype.updateWorldListeningZones = function (world_id, listen_to, stop_listen_to, onSuccess, onError) {
+            this.updateWorldListeningZonesReq({
+                "world_id": world_id,
+                "listen_to": listen_to,
+                "stop_listen_to": stop_listen_to
+            }, onSuccess, onError);
+        };
         Serverville.prototype.triggerResidentEventReq = function (request, onSuccess, onError) {
             this.apiByName("TriggerResidentEvent", request, onSuccess, onError);
         };
@@ -969,6 +1036,7 @@ var sv;
             this.local_deletes = {};
             this.most_recent = 0;
         }
+        KeyData.prototype.mostRecentModifiedTime = function () { return this.most_recent; };
         KeyData.prototype.loadKeys = function (keys, onDone) {
             var self = this;
             this.server.getDataKeys(this.id, keys, 0, false, function (reply) {
@@ -1051,7 +1119,7 @@ var sv;
                 };
                 this.data_info[key] = info;
             }
-            this.local_dirty[key] = info;
+            this.local_dirty[key] = true;
             delete this.local_deletes[key];
         };
         KeyData.prototype.delete = function (key) {
@@ -1063,7 +1131,7 @@ var sv;
                 return;
             delete this.data[key];
             delete this.data_info[key];
-            this.local_deletes[key] = info;
+            this.local_deletes[key] = true;
         };
         KeyData.prototype.save = function (onDone) {
             var user = this.server.userInfo();
@@ -1072,7 +1140,7 @@ var sv;
             var saveSet = null;
             var deleteSet = null;
             for (var key in this.local_dirty) {
-                var info = this.local_dirty[key];
+                var info = this.data_info[key];
                 if (saveSet == null)
                     saveSet = [];
                 saveSet.push({
@@ -1095,6 +1163,29 @@ var sv;
                 if (onDone)
                     onDone(reply);
             });
+        };
+        KeyData.prototype.stringify = function () {
+            var temp = {
+                id: this.id,
+                data: this.data_info,
+                dirty: this.local_dirty,
+                deleted: this.local_deletes
+            };
+            return JSON.stringify(temp);
+        };
+        KeyData.fromJson = function (json, server) {
+            var temp = JSON.parse(json);
+            var keydata = new KeyData(server, temp.id);
+            keydata.data_info = temp.data;
+            keydata.local_dirty = temp.dirty;
+            keydata.local_deletes = temp.deleted;
+            for (var key in keydata.data_info) {
+                var dataInfo = keydata.data_info[key];
+                keydata.data[key] = dataInfo.value;
+                if (dataInfo.modified > keydata.most_recent)
+                    keydata.most_recent = dataInfo.modified;
+            }
+            return keydata;
         };
         return KeyData;
     }());

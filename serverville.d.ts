@@ -7,16 +7,6 @@ declare namespace sv
         errorDetails:string;
     }
    
-	export interface SetLocaleRequest
-	{
-		country:string;
-		language:string;
-	}
-
-	export interface EmptyClientReply
-	{
-	}
-
 	export interface SignIn
 	{
 		username:string;
@@ -89,6 +79,16 @@ declare namespace sv
 		email:string;
 		session_id:string;
 		admin_level:number;
+	}
+
+	export interface SetLocaleRequest
+	{
+		country:string;
+		language:string;
+	}
+
+	export interface EmptyClientReply
+	{
 	}
 
 	export interface GetUserDataComboRequest
@@ -201,6 +201,14 @@ declare namespace sv
 	{
 		id:string;
 		keys:Array<string>;
+		since:number;
+		include_deleted:boolean;
+	}
+
+	export interface KeysStartingWithRequest
+	{
+		id:string;
+		prefix:string;
 		since:number;
 		include_deleted:boolean;
 	}
@@ -380,6 +388,18 @@ declare namespace sv
 		channel_id:string;
 	}
 
+	export interface UpdateWorldListeningZonesRequest
+	{
+		world_id:string;
+		listen_to:Array<string>;
+		stop_listen_to:Array<string>;
+	}
+
+	export interface WorldZonesInfo
+	{
+		zones:{[key:string]:ChannelInfo};
+	}
+
 	export interface TriggerResidentEventRequest
 	{
 		resident_id:string;
@@ -543,8 +563,6 @@ declare namespace sv
 		userInfo():UserAccountInfo;
 		
 		apiByName(api:string, request:Object, onSuccess:(reply:Object)=>void, onError?:(reply:ErrorReply)=>void):void;
-		setLocaleReq(request:SetLocaleRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
-		setLocale(country:string, language:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		signInReq(request:SignIn, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		signIn(username:string, email:string, password:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		validateSessionReq(request:ValidateSessionRequest, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void;
@@ -561,6 +579,8 @@ declare namespace sv
 		getTime(onSuccess?:(reply:ServerTime)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getUserInfoReq(request:GetUserInfo, onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getUserInfo(onSuccess?:(reply:UserAccountInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		setLocaleReq(request:SetLocaleRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		setLocale(country:string, language:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getUserDataComboReq(request:GetUserDataComboRequest, onSuccess?:(reply:GetUserDataComboReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getUserDataCombo(since:number, onSuccess?:(reply:GetUserDataComboReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		setUserKeyReq(request:SetUserDataRequest, onSuccess?:(reply:SetDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
@@ -583,6 +603,8 @@ declare namespace sv
 		getDataKey(id:string, key:string, onSuccess?:(reply:DataItemReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getDataKeysReq(request:GlobalKeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getDataKeys(id:string, keys:Array<string>, since:number, include_deleted:boolean, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getDataKeysStartingWithReq(request:KeysStartingWithRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getDataKeysStartingWith(id:string, prefix:string, since:number, include_deleted:boolean, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getAllDataKeysReq(request:AllGlobalKeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		getAllDataKeys(id:string, since:number, include_deleted:boolean, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		pageAllDataKeysReq(request:PageGlobalKeysRequest, onSuccess?:(reply:OrderedDataReply)=>void, onError?:(reply:ErrorReply)=>void):void;
@@ -627,6 +649,8 @@ declare namespace sv
 		listenToChannel(channel_id:string, onSuccess?:(reply:ChannelInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		stopListenToChannelReq(request:StopListenToChannelRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		stopListenToChannel(channel_id:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		updateWorldListeningZonesReq(request:UpdateWorldListeningZonesRequest, onSuccess?:(reply:WorldZonesInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
+		updateWorldListeningZones(world_id:string, listen_to:Array<string>, stop_listen_to:Array<string>, onSuccess?:(reply:WorldZonesInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		triggerResidentEventReq(request:TriggerResidentEventRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		triggerResidentEvent(resident_id:string, event_type:string, event_data:string, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		sendUserMessageReq(request:SendUserMessageRequest, onSuccess?:(reply:EmptyClientReply)=>void, onError?:(reply:ErrorReply)=>void):void;

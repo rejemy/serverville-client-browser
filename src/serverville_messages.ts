@@ -4,16 +4,6 @@
 namespace sv
 {
 
-	export interface SetLocaleRequest
-	{
-		country:string;
-		language:string;
-	}
-
-	export interface EmptyClientReply
-	{
-	}
-
 	export interface SignIn
 	{
 		username:string;
@@ -86,6 +76,16 @@ namespace sv
 		email:string;
 		session_id:string;
 		admin_level:number;
+	}
+
+	export interface SetLocaleRequest
+	{
+		country:string;
+		language:string;
+	}
+
+	export interface EmptyClientReply
+	{
 	}
 
 	export interface GetUserDataComboRequest
@@ -198,6 +198,14 @@ namespace sv
 	{
 		id:string;
 		keys:Array<string>;
+		since:number;
+		include_deleted:boolean;
+	}
+
+	export interface KeysStartingWithRequest
+	{
+		id:string;
+		prefix:string;
 		since:number;
 		include_deleted:boolean;
 	}
@@ -375,6 +383,18 @@ namespace sv
 	export interface StopListenToChannelRequest
 	{
 		channel_id:string;
+	}
+
+	export interface UpdateWorldListeningZonesRequest
+	{
+		world_id:string;
+		listen_to:Array<string>;
+		stop_listen_to:Array<string>;
+	}
+
+	export interface WorldZonesInfo
+	{
+		zones:{[key:string]:ChannelInfo};
 	}
 
 	export interface TriggerResidentEventRequest

@@ -410,6 +410,29 @@ namespace sv
         
 		// Start generated code -----------------------------------------------------------------------------------
 
+		signInReq(request:SignIn, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            var self:Serverville = this;
+			this.apiByName("SignIn",
+				request,
+				function(reply:SignInReply):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
+				onError
+			);
+		}
+
+		signIn(username:string, email:string, password:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.signInReq(
+				{
+					"username":username,
+					"email":email,
+					"password":password
+				},
+				onSuccess,
+				onError
+			);
+		}
+
 		validateSessionReq(request:ValidateSessionRequest, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             var self:Serverville = this;
@@ -807,29 +830,6 @@ namespace sv
 			);
 		}
 
-		signInReq(request:SignIn, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
-		{
-            var self:Serverville = this;
-			this.apiByName("SignIn",
-				request,
-				function(reply:SignInReply):void { self.setUserInfo(reply); if(onSuccess) { onSuccess(reply);} },
-				onError
-			);
-		}
-
-		signIn(username:string, email:string, password:string, onSuccess?:(reply:SignInReply)=>void, onError?:(reply:ErrorReply)=>void):void
-		{
-			this.signInReq(
-				{
-					"username":username,
-					"email":email,
-					"password":password
-				},
-				onSuccess,
-				onError
-			);
-		}
-
 		getDataKeysReq(request:GlobalKeysRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
@@ -846,6 +846,30 @@ namespace sv
 				{
 					"id":id,
 					"keys":keys,
+					"since":since,
+					"include_deleted":include_deleted
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		getDataKeysStartingWithReq(request:KeysStartingWithRequest, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("GetDataKeysStartingWith",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getDataKeysStartingWith(id:string, prefix:string, since:number, include_deleted:boolean, onSuccess?:(reply:UserDataReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getDataKeysStartingWithReq(
+				{
+					"id":id,
+					"prefix":prefix,
 					"since":since,
 					"include_deleted":include_deleted
 				},
@@ -1335,6 +1359,29 @@ namespace sv
 			this.stopListenToChannelReq(
 				{
 					"channel_id":channel_id
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		updateWorldListeningZonesReq(request:UpdateWorldListeningZonesRequest, onSuccess?:(reply:WorldZonesInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("UpdateWorldListeningZones",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		updateWorldListeningZones(world_id:string, listen_to:Array<string>, stop_listen_to:Array<string>, onSuccess?:(reply:WorldZonesInfo)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.updateWorldListeningZonesReq(
+				{
+					"world_id":world_id,
+					"listen_to":listen_to,
+					"stop_listen_to":stop_listen_to
 				},
 				onSuccess,
 				onError
