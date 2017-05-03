@@ -1016,6 +1016,14 @@ var sv;
                 "product_id": product_id
             }, onSuccess, onError);
         };
+        Serverville.prototype.batchRequestReq = function (request, onSuccess, onError) {
+            this.apiByName("batchRequest", request, onSuccess, onError);
+        };
+        Serverville.prototype.batchRequest = function (requests, onSuccess, onError) {
+            this.batchRequestReq({
+                "requests": requests
+            }, onSuccess, onError);
+        };
         return Serverville;
     }());
     sv.Serverville = Serverville;

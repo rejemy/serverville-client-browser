@@ -202,11 +202,12 @@ namespace sv
 				deleteSet.push(key);
 			}
 			
+			var self:KeyData = this;
 			this.server.setAndDeleteUserKeys(saveSet, deleteSet,
 				function(reply:SetDataReply):void
 				{
-					this.local_dirty = {};
-					this.local_deletes = {};
+					self.local_dirty = {};
+					self.local_deletes = {};
 					
 					if(onDone)
 						onDone(null);

@@ -1583,6 +1583,27 @@ namespace sv
 			);
 		}
 
+		batchRequestReq(request:BatchRequest, onSuccess?:(reply:BatchRequestReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("batchRequest",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		batchRequest(requests:Array<BatchRequestItem>, onSuccess?:(reply:BatchRequestReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.batchRequestReq(
+				{
+					"requests":requests
+				},
+				onSuccess,
+				onError
+			);
+		}
+
 
         
         

@@ -25,7 +25,7 @@ namespace sv
     
     export interface ServervilleTransport
 	{
-        init(onConnected:(err:ErrorReply)=>void);
+        init(onConnected:(err:ErrorReply)=>void):void;
         callApi(api:string, request:Object, onSuccess:(reply:Object)=>void, onError:(reply:ErrorReply)=>void):void;
         close():void;
     }

@@ -94,6 +94,7 @@ namespace sv
 		private getNotifications():void
 		{
 			var url:string = this.SV.ServerURL+"/notifications";
+			var self:HttpTransport = this;
 
 			var onSuccess = function(reply:PendingNotificationList):void
 			{
@@ -103,7 +104,7 @@ namespace sv
 				for(var i:number=0; i<reply.notifications.length; i++)
 				{
 					let note:PendingNotification = reply.notifications[i];
-					this.SV._onServerNotification(note.notification_type, note.body);
+					self.SV._onServerNotification(note.notification_type, note.body);
 				}
 			};
 

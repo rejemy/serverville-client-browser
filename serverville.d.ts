@@ -488,6 +488,22 @@ declare namespace sv
 		currencies:{[key:string]:number};
 	}
 
+	export interface BatchRequestItem
+	{
+		api:string;
+		request:string;
+	}
+
+	export interface BatchRequest
+	{
+		requests:Array<BatchRequestItem>;
+	}
+
+	export interface BatchRequestReply
+	{
+		replies:Array<any>;
+	}
+
 	export interface ResidentJoinedNotification
 	{
 		resident_id:string;
@@ -669,6 +685,8 @@ declare namespace sv
 		getProduct(product_id:string, onSuccess?:(reply:ProductInfo)=>void, onError?:(reply:ErrorReply)=>void):void;
 		stripeCheckoutReq(request:StripeCheckoutRequest, onSuccess?:(reply:ProductPurchasedReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		stripeCheckout(stripe_token:string, product_id:string, onSuccess?:(reply:ProductPurchasedReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		batchRequestReq(request:BatchRequest, onSuccess?:(reply:BatchRequestReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		batchRequest(requests:Array<BatchRequestItem>, onSuccess?:(reply:BatchRequestReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 
 
     }
