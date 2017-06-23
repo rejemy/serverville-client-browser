@@ -361,12 +361,14 @@ declare namespace sv
 	export interface ChannelMemberInfo
 	{
 		resident_id:string;
+		resident_type:string;
 		values:{[key:string]:any};
 	}
 
 	export interface ChannelInfo
 	{
 		channel_id:string;
+		channel_type:string;
 		values:{[key:string]:any};
 		members:{[key:string]:ChannelMemberInfo};
 	}
@@ -507,6 +509,7 @@ declare namespace sv
 	export interface ResidentJoinedNotification
 	{
 		resident_id:string;
+		resident_type:string;
 		via_channel:string;
 		values:{[key:string]:any};
 	}

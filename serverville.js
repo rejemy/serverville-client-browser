@@ -1,3 +1,4 @@
+"use strict";
 // Generated, unfortunately. Edit original template in browser/templates/serverville_messages.ts.tmpl
 var sv;
 (function (sv) {
@@ -91,12 +92,13 @@ var sv;
         };
         HttpTransport.prototype.getNotifications = function () {
             var url = this.SV.ServerURL + "/notifications";
+            var self = this;
             var onSuccess = function (reply) {
                 if (!reply.notifications)
                     return;
                 for (var i = 0; i < reply.notifications.length; i++) {
                     var note = reply.notifications[i];
-                    this.SV._onServerNotification(note.notification_type, note.body);
+                    self.SV._onServerNotification(note.notification_type, note.body);
                 }
             };
             var onError = function (err) {
@@ -1162,9 +1164,10 @@ var sv;
                     deleteSet = [];
                 deleteSet.push(key);
             }
+            var self = this;
             this.server.setAndDeleteUserKeys(saveSet, deleteSet, function (reply) {
-                this.local_dirty = {};
-                this.local_deletes = {};
+                self.local_dirty = {};
+                self.local_deletes = {};
                 if (onDone)
                     onDone(null);
             }, function (reply) {

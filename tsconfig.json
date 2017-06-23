@@ -2,7 +2,11 @@
 	"compilerOptions": {
 		"target": "es5",
 		"out": "serverville.js",
-		"sourceMap": true
+		"sourceMap": true,
+		"strictNullChecks": false,
+		"noImplicitAny": true,
+		"noImplicitThis": true,
+		"alwaysStrict": true
 	},
 	"files": [
 		"src/serverville.ts",
