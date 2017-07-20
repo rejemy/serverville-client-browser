@@ -304,6 +304,12 @@ var sv;
             var self = this;
             function onTransportInitted(err) {
                 if (err != null) {
+                    if (self.SessionId && err.errorCode == 2) {
+                        self.signOut();
+                        // Try again
+                        self.Transport.init(onTransportInitted);
+                        return;
+                    }
                     onComplete(null, err);
                     return;
                 }
