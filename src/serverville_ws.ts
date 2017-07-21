@@ -20,12 +20,12 @@ namespace sv
         
         public init(onConnected:(err:ErrorReply)=>void)
         {
-            var url:string = this.SV.ServerURL+"/websocket";
+            let url:string = this.SV.ServerURL+"/websocket";
             
             this.ServerSocket = new WebSocket(url);
             this.Connected = false;
             
-            var self:WebSocketTransport = this;
+            let self:WebSocketTransport = this;
             
             this.ServerSocket.onopen = function(evt:Event):void
             {
@@ -55,7 +55,7 @@ namespace sv
         
         public callApi(api:string, request:Object, onSuccess:(reply:Object)=>void, onError:(reply:ErrorReply)=>void):void
         {
-            var self:WebSocketTransport = this;
+            let self:WebSocketTransport = this;
             if(this.Connected)
             {
                 sendMessage();
@@ -78,13 +78,13 @@ namespace sv
 
             function sendMessage()
             {
-                var messageNum:string = (self.MessageSequence++).toString();
-                var message:string = api+":"+messageNum+":"+JSON.stringify(request);
+                let messageNum:string = (self.MessageSequence++).toString();
+                let message:string = api+":"+messageNum+":"+JSON.stringify(request);
                 
                 if(self.SV.LogMessagesToConsole)
                     console.log("WS<- "+message);
                 
-                var callback:ServervilleWSReplyHandler = function(isError:boolean, reply:Object):void
+                let callback:ServervilleWSReplyHandler = function(isError:boolean, reply:Object):void
                 {
                     if(isError)
                     {
@@ -130,31 +130,31 @@ namespace sv
 		
 		private onWSMessage(evt:MessageEvent):void
 		{
-			var messageStr:string = evt.data;
+			let messageStr:string = evt.data;
             
             if(this.SV.LogMessagesToConsole)
                 console.log("WS-> "+messageStr);
             
-            var split1:number = messageStr.indexOf(":");
+            let split1:number = messageStr.indexOf(":");
             if(split1 < 1)
             {
                 console.log("Incorrectly formatted message");
                 return;
             }
             
-            var messageType:string = messageStr.substring(0, split1);
+            let messageType:string = messageStr.substring(0, split1);
             if(messageType == "N")
             {
                 // Server push message
-                var split2:number = messageStr.indexOf(":", split1+1);
+                let split2:number = messageStr.indexOf(":", split1+1);
                 if(split2 < 0)
                 {
                     console.log("Incorrectly formatted message");
                     return;
                 }
                 
-                var notificationType:string = messageStr.substring(split1+1, split2);
-                var notificationJson:string = messageStr.substring(split2+1);
+                let notificationType:string = messageStr.substring(split1+1, split2);
+                let notificationJson:string = messageStr.substring(split2+1);
 				this.SV._onServerNotification(notificationType, notificationJson);
             }
             else if(messageType == "E" || messageType == "R")
@@ -167,16 +167,16 @@ namespace sv
                     return;
                 }
                 
-                var messageNum:string = messageStr.substring(split1+1, split2);
+                let messageNum:string = messageStr.substring(split1+1, split2);
                 
-                var messageJson:string = messageStr.substring(split2+1);
-                var messageData:Object = JSON.parse(messageJson);
+                let messageJson:string = messageStr.substring(split2+1);
+                let messageData:Object = JSON.parse(messageJson);
                 
-                var isError:boolean = false;
+                let isError:boolean = false;
                 if(messageType == "E")
                     isError = true;
                     
-                var callback:ServervilleWSReplyHandler = this.ReplyCallbacks[messageNum];
+                let callback:ServervilleWSReplyHandler = this.ReplyCallbacks[messageNum];
                 delete this.ReplyCallbacks[messageNum];
                 callback(isError, messageData);
             }

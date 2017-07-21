@@ -231,13 +231,13 @@ var sv;
             var messageType = messageStr.substring(0, split1);
             if (messageType == "N") {
                 // Server push message
-                var split2 = messageStr.indexOf(":", split1 + 1);
-                if (split2 < 0) {
+                var split2_1 = messageStr.indexOf(":", split1 + 1);
+                if (split2_1 < 0) {
                     console.log("Incorrectly formatted message");
                     return;
                 }
-                var notificationType = messageStr.substring(split1 + 1, split2);
-                var notificationJson = messageStr.substring(split2 + 1);
+                var notificationType = messageStr.substring(split1 + 1, split2_1);
+                var notificationJson = messageStr.substring(split2_1 + 1);
                 this.SV._onServerNotification(notificationType, notificationJson);
             }
             else if (messageType == "E" || messageType == "R") {

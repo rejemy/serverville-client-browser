@@ -32,14 +32,14 @@ namespace sv
 
 		loadKeys(keys:string[], onDone?:()=>void):void
 		{
-			var self:KeyData = this;
+			let self:KeyData = this;
 			
 			this.server.getDataKeys(this.id, keys, 0, false,
 				function(reply:UserDataReply):void
 				{
-					for(var key in reply.values)
+					for(let key in reply.values)
 					{
-						var dataInfo:DataItemReply = reply.values[key];
+						let dataInfo:DataItemReply = reply.values[key];
 						self.data_info[dataInfo.key] = dataInfo;
 						self.data[key] = dataInfo.value;
 					}
@@ -61,15 +61,15 @@ namespace sv
 			this.local_dirty = {};
 			this.local_deletes = {};
 
-			var self:KeyData = this;
+			let self:KeyData = this;
 			this.server.getAllDataKeys(this.id, 0, false,
 				function(reply:UserDataReply):void
 				{
 					self.data_info = reply.values;
 					
-					for(var key in self.data_info)
+					for(let key in self.data_info)
 					{
-						var dataInfo:DataItemReply = self.data_info[key];
+						let dataInfo:DataItemReply = self.data_info[key];
 						self.data[key] = dataInfo.value;
 						if(dataInfo.modified > self.most_recent)
 							self.most_recent = dataInfo.modified;
@@ -88,13 +88,13 @@ namespace sv
 		
 		refresh(onDone?:()=>void):void
 		{
-			var self:KeyData = this;
+			let self:KeyData = this;
 			this.server.getAllDataKeys(this.id, this.most_recent, true,
 				function(reply:UserDataReply):void
 				{
-					for(var key in reply.values)
+					for(let key in reply.values)
 					{
-						var dataInfo:DataItemReply = reply.values[key];
+						let dataInfo:DataItemReply = reply.values[key];
 						if(dataInfo.deleted)
 						{
 							delete self.data[key];
@@ -124,12 +124,12 @@ namespace sv
 		
 		set(key:string, val:any, data_type:JsonDataTypeEnum = null):void
 		{
-			var user:UserAccountInfo = this.server.userInfo();
+			let user:UserAccountInfo = this.server.userInfo();
 			if(user == null || user.user_id != this.id)
 				throw "Read-only data!";
 				
 			this.data[key] = val;
-			var info:DataItemReply = this.data_info[key];
+			let info:DataItemReply = this.data_info[key];
 			if(info)
 			{
 				info.value = val;
@@ -156,11 +156,11 @@ namespace sv
 		
 		delete(key:string):void
 		{
-			var user:UserAccountInfo = this.server.userInfo();
+			let user:UserAccountInfo = this.server.userInfo();
 			if(user == null || user.user_id != this.id)
 				throw "Read-only data!";
 			
-			var info:DataItemReply = this.data_info[key];
+			let info:DataItemReply = this.data_info[key];
 			if(!info)
 				return;
 
@@ -172,16 +172,16 @@ namespace sv
 
 		save(onDone?:(reply:ErrorReply)=>void):void
 		{
-			var user:UserAccountInfo = this.server.userInfo();
+			let user:UserAccountInfo = this.server.userInfo();
 			if(user == null || user.user_id != this.id)
 				throw "Read-only data!";
 				
-			var saveSet:SetUserDataRequest[] = null;
-			var deleteSet:string[] = null;
+			let saveSet:SetUserDataRequest[] = null;
+			let deleteSet:string[] = null;
 			
-			for(var key in this.local_dirty)
+			for(let key in this.local_dirty)
 			{
-				var info:DataItemReply = this.data_info[key];
+				let info:DataItemReply = this.data_info[key];
 				if(saveSet == null)
 					saveSet = [];
 
@@ -194,7 +194,7 @@ namespace sv
 				);
 			}
 
-			for(var key in this.local_deletes)
+			for(let key in this.local_deletes)
 			{
 				if(deleteSet == null)
 					deleteSet = [];
@@ -202,7 +202,7 @@ namespace sv
 				deleteSet.push(key);
 			}
 			
-			var self:KeyData = this;
+			let self:KeyData = this;
 			this.server.setAndDeleteUserKeys(saveSet, deleteSet,
 				function(reply:SetDataReply):void
 				{
@@ -222,7 +222,7 @@ namespace sv
 
 		stringify():string
 		{
-			var temp:object =
+			let temp:object =
 			{
 				id: this.id,
 				data: this.data_info,
@@ -235,16 +235,16 @@ namespace sv
 
 		static fromJson(json:string, server:Serverville):KeyData
 		{
-			var temp:any = JSON.parse(json);
+			let temp:any = JSON.parse(json);
 
-			var keydata:KeyData = new KeyData(server, temp.id);
+			let keydata:KeyData = new KeyData(server, temp.id);
 			keydata.data_info = temp.data;
 			keydata.local_dirty = temp.dirty;
 			keydata.local_deletes = temp.deleted;
 
-			for(var key in keydata.data_info)
+			for(let key in keydata.data_info)
 			{
-				var dataInfo:DataItemReply = keydata.data_info[key];
+				let dataInfo:DataItemReply = keydata.data_info[key];
 				keydata.data[key] = dataInfo.value;
 				if(dataInfo.modified > keydata.most_recent)
 					keydata.most_recent = dataInfo.modified;

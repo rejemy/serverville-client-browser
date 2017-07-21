@@ -30,17 +30,17 @@ namespace sv
 
         private doPost(url:string, request:Object, onSuccess:(reply:Object)=>void, onError:(reply:ErrorReply)=>void):void
         {
-            var req:XMLHttpRequest = new XMLHttpRequest();
+            let req:XMLHttpRequest = new XMLHttpRequest();
 			req.open("POST", url);
 			if(this.SV.SessionId)
 				req.setRequestHeader("Authorization", this.SV.SessionId);
 			req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-			var body:string = JSON.stringify(request);
+			let body:string = JSON.stringify(request);
 			
             if(this.SV.LogMessagesToConsole)
                 console.log("HTTP<- "+body);
             
-			var self:HttpTransport = this;
+			let self:HttpTransport = this;
 			
 			req.onload = function(ev:Event):void
 			{
@@ -49,7 +49,7 @@ namespace sv
                 
 				if (req.status >= 200 && req.status < 400)
 				{
-					var message:Object = JSON.parse(req.response);
+					let message:Object = JSON.parse(req.response);
 					if(onSuccess)
 					{
 						onSuccess(message);
@@ -57,7 +57,7 @@ namespace sv
 				}
 				else
 				{
-                    var error:ErrorReply = JSON.parse(req.response);
+                    let error:ErrorReply = JSON.parse(req.response);
 					
 					if(onError)
 						onError(error);
@@ -75,7 +75,7 @@ namespace sv
 			
 			req.onerror = function(ev:Event):void
 			{
-                var err:ErrorReply = makeClientError(-2);
+                let err:ErrorReply = makeClientError(-2);
                 
 				if(onError)
 					onError(err);
@@ -93,22 +93,22 @@ namespace sv
 
 		private getNotifications():void
 		{
-			var url:string = this.SV.ServerURL+"/notifications";
-			var self:HttpTransport = this;
+			let url:string = this.SV.ServerURL+"/notifications";
+			let self:HttpTransport = this;
 
-			var onSuccess = function(reply:PendingNotificationList):void
+			let onSuccess = function(reply:PendingNotificationList):void
 			{
 				if(!reply.notifications)
 					return;
 
-				for(var i:number=0; i<reply.notifications.length; i++)
+				for(let i:number=0; i<reply.notifications.length; i++)
 				{
 					let note:PendingNotification = reply.notifications[i];
 					self.SV._onServerNotification(note.notification_type, note.body);
 				}
 			};
 
-			var onError = function(err:ErrorReply):void
+			let onError = function(err:ErrorReply):void
 			{
 				console.log("Error retreiving notifications: "+err.errorMessage);
 			};
@@ -118,16 +118,16 @@ namespace sv
 
 		static unauthedRequest(url:string, request:Object, onSuccess:(reply:Object)=>void, onError:(reply:ErrorReply)=>void):void
         {
-            var req:XMLHttpRequest = new XMLHttpRequest();
+            let req:XMLHttpRequest = new XMLHttpRequest();
 			req.open("POST", url);
 			req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-			var body:string = JSON.stringify(request);
+			let body:string = JSON.stringify(request);
 
 			req.onload = function(ev:Event):void
 			{
 				if (req.status >= 200 && req.status < 400)
 				{
-					var message:Object = JSON.parse(req.response);
+					let message:Object = JSON.parse(req.response);
 					if(onSuccess)
 					{
 						onSuccess(message);
@@ -135,7 +135,7 @@ namespace sv
 				}
 				else
 				{
-                    var error:ErrorReply = JSON.parse(req.response);
+                    let error:ErrorReply = JSON.parse(req.response);
 					
 					if(onError)
 						onError(error);
@@ -145,7 +145,7 @@ namespace sv
 			
 			req.onerror = function(ev:Event):void
 			{
-                var err:ErrorReply = makeClientError(-2);
+                let err:ErrorReply = makeClientError(-2);
                 
 				if(onError)
 					onError(err);

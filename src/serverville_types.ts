@@ -9,7 +9,7 @@ namespace sv
     
     export function makeClientError(code:number, details:string=null):ErrorReply
     {
-        var msg:string = "Unknown network error";
+        let msg:string = "Unknown network error";
         switch(code)
         {
             case -1:

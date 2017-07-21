@@ -50,7 +50,7 @@ namespace sv
 		private initServerUrl(url:string):void
 		{
 			this.ServerURL = url;
-			var protocolLen:number = this.ServerURL.indexOf("://");
+			let protocolLen:number = this.ServerURL.indexOf("://");
 			if(protocolLen < 2)
 				throw "Malformed url: "+url;
             this.ServerHost = this.ServerURL.substring(protocolLen+3);
@@ -72,7 +72,7 @@ namespace sv
 
 		init(onComplete:(user:UserAccountInfo, err:ErrorReply)=>void):void
 		{
-			var self:Serverville = this;
+			let self:Serverville = this;
 			
             function onTransportInitted(err:ErrorReply):void
             {
@@ -131,7 +131,7 @@ namespace sv
 				return;
 			}
 
-			var serverUrl:string = this.ServerURL;
+			let serverUrl:string = this.ServerURL;
 			if(this.ServerProtocol == "ws")
 				serverUrl = "http://"+this.ServerHost;
 			else if(this.ServerProtocol == "wss")
@@ -139,17 +139,17 @@ namespace sv
 			
 			serverUrl += "/api/GetHostWithResident";
 			
-			var req:GetHostWithResidentRequest = 
+			let req:GetHostWithResidentRequest = 
 			{
 				resident_id: resId
 			};
 
-			var self:Serverville = this;
+			let self:Serverville = this;
 
 			HttpTransport.unauthedRequest(serverUrl, req,
 				function(reply:GetHostWithResidentReply):void
 				{
-					var url:string = self.fixupServerURL(reply.host);
+					let url:string = self.fixupServerURL(reply.host);
 					self.initServerUrl(url);
 					self.init(onComplete);
 				},
@@ -161,7 +161,7 @@ namespace sv
 
 		private fixupServerURL(host:string):string
 		{
-			var url:string = host;
+			let url:string = host;
 			if(host.indexOf("://") < 0)
 			{
 				url = this.ServerProtocol + "://"+host;
@@ -171,7 +171,7 @@ namespace sv
 
 		switchHosts(host:string, onComplete:(err:ErrorReply)=>void):void
 		{
-			var url:string = this.fixupServerURL(host);
+			let url:string = this.fixupServerURL(host);
 
 			if(this.ServerURL == url)
 			{
@@ -195,7 +195,7 @@ namespace sv
 			if(this.PingPeriod == 0 || this.PingTimer != 0)
 				return;
 
-			var self:Serverville = this;
+			let self:Serverville = this;
 
 			this.PingTimer = window.setInterval(function():void
 			{
@@ -265,7 +265,7 @@ namespace sv
 		
 		_onServerNotification(notificationType:string, notificationJson:string):void
 		{
-			var notification:Object = JSON.parse(notificationJson);
+			let notification:Object = JSON.parse(notificationJson);
 
 			switch(notificationType)
 			{
@@ -301,7 +301,7 @@ namespace sv
 
 		_onUserMessage(message:UserMessageNotification):void
 		{
-			var typeHandler:ServerMessageTypeHandler = this.UserMessageTypeHandlers[message.message_type];
+			let typeHandler:ServerMessageTypeHandler = this.UserMessageTypeHandlers[message.message_type];
 			if(typeHandler != null)
 			{
 				typeHandler(message);
@@ -328,7 +328,7 @@ namespace sv
 			if(performance.now() - this.LastSend < 4000)
 				return;
 
-			var self:Serverville = this;
+			let self:Serverville = this;
 
 			this.getTime(function(reply:ServerTime):void
 			{
@@ -367,14 +367,14 @@ namespace sv
 			if(!this.UserInfo)
 				throw "No user loaded";
 				
-			var data:KeyData = new KeyData(this, this.UserInfo.user_id);
+			let data:KeyData = new KeyData(this, this.UserInfo.user_id);
 			data.loadAll(onDone);
 			return data;
 		}
 		
 		loadKeyData(id:string, onDone?:()=>void):KeyData
 		{
-			var data:KeyData = new KeyData(this, id);
+			let data:KeyData = new KeyData(this, id);
 			data.loadAll(onDone);
 			return data;
 		}
@@ -402,7 +402,7 @@ namespace sv
 
         apiByName(api:string, request:Object, onSuccess:(reply:Object)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
-			var self:Serverville = this;
+			let self:Serverville = this;
 			this.Transport.callApi(api,
 				request,
 				function(reply:Object):void
