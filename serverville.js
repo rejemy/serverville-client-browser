@@ -1016,7 +1016,7 @@ var sv;
             }, onSuccess, onError);
         };
         Serverville.prototype.stripeCheckoutReq = function (request, onSuccess, onError) {
-            this.apiByName("stripeCheckout", request, onSuccess, onError);
+            this.apiByName("StripeCheckout", request, onSuccess, onError);
         };
         Serverville.prototype.stripeCheckout = function (stripe_token, product_id, onSuccess, onError) {
             this.stripeCheckoutReq({
@@ -1030,6 +1030,23 @@ var sv;
         Serverville.prototype.batchRequest = function (requests, onSuccess, onError) {
             this.batchRequestReq({
                 "requests": requests
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.getBraintreeClientTokenReq = function (request, onSuccess, onError) {
+            this.apiByName("getBraintreeClientToken", request, onSuccess, onError);
+        };
+        Serverville.prototype.getBraintreeClientToken = function (api_version, onSuccess, onError) {
+            this.getBraintreeClientTokenReq({
+                "api_version": api_version
+            }, onSuccess, onError);
+        };
+        Serverville.prototype.braintreePurchaseReq = function (request, onSuccess, onError) {
+            this.apiByName("BraintreePurchase", request, onSuccess, onError);
+        };
+        Serverville.prototype.braintreePurchase = function (nonce, product_id, onSuccess, onError) {
+            this.braintreePurchaseReq({
+                "nonce": nonce,
+                "product_id": product_id
             }, onSuccess, onError);
         };
         return Serverville;

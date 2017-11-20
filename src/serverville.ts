@@ -78,7 +78,7 @@ namespace sv
             {
                 if(err != null)
                 {
-					if(self.SessionId && err.errorCode == 2)
+					if(self.SessionId && err.errorCode == 2 || err.errorCode == 19)
 					{
 						self.signOut();
 
@@ -94,25 +94,26 @@ namespace sv
                 if(self.SessionId)
                 {
                     self.validateSession(self.SessionId,
-                    function(reply:UserAccountInfo):void
-                    {
-                        onComplete(reply, null);
-
-						self.startPingHeartbeat();
-                    },
-                    function(err:ErrorReply):void
-                    {
-						if(self.SessionId && err.errorCode == 2)
+						function(reply:UserAccountInfo):void
 						{
-							self.signOut();
+							onComplete(reply, null);
 
-							// Try again
-							self.Transport.init(onTransportInitted);
-							return;
+							self.startPingHeartbeat();
+						},
+						function(err:ErrorReply):void
+						{
+							if(self.SessionId && err.errorCode == 2 || err.errorCode == 19)
+							{
+								self.signOut();
+
+								// Try again
+								self.Transport.init(onTransportInitted);
+								return;
+							}
+							
+							onComplete(null, err);
 						}
-                        
-                        onComplete(null, err);
-                    });
+					);
                 }
                 else
                 {
@@ -1573,7 +1574,7 @@ namespace sv
 		stripeCheckoutReq(request:StripeCheckoutRequest, onSuccess?:(reply:ProductPurchasedReply)=>void, onError?:(reply:ErrorReply)=>void):void
 		{
             
-			this.apiByName("stripeCheckout",
+			this.apiByName("StripeCheckout",
 				request,
 				onSuccess,
 				onError
@@ -1607,6 +1608,49 @@ namespace sv
 			this.batchRequestReq(
 				{
 					"requests":requests
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		getBraintreeClientTokenReq(request:BraintreeClientTokenRequest, onSuccess?:(reply:BraintreeClientTokenReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("getBraintreeClientToken",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		getBraintreeClientToken(api_version:number, onSuccess?:(reply:BraintreeClientTokenReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.getBraintreeClientTokenReq(
+				{
+					"api_version":api_version
+				},
+				onSuccess,
+				onError
+			);
+		}
+
+		braintreePurchaseReq(request:BraintreePurchaseRequest, onSuccess?:(reply:ProductPurchasedReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+            
+			this.apiByName("BraintreePurchase",
+				request,
+				onSuccess,
+				onError
+			);
+		}
+
+		braintreePurchase(nonce:string, product_id:string, onSuccess?:(reply:ProductPurchasedReply)=>void, onError?:(reply:ErrorReply)=>void):void
+		{
+			this.braintreePurchaseReq(
+				{
+					"nonce":nonce,
+					"product_id":product_id
 				},
 				onSuccess,
 				onError

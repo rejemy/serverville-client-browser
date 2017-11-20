@@ -503,6 +503,22 @@ namespace sv
 		replies:Array<any>;
 	}
 
+	export interface BraintreeClientTokenRequest
+	{
+		api_version:number;
+	}
+
+	export interface BraintreeClientTokenReply
+	{
+		client_token:string;
+	}
+
+	export interface BraintreePurchaseRequest
+	{
+		nonce:string;
+		product_id:string;
+	}
+
 	export interface ResidentJoinedNotification
 	{
 		resident_id:string;

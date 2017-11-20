@@ -506,6 +506,22 @@ declare namespace sv
 		replies:Array<any>;
 	}
 
+	export interface BraintreeClientTokenRequest
+	{
+		api_version:number;
+	}
+
+	export interface BraintreeClientTokenReply
+	{
+		client_token:string;
+	}
+
+	export interface BraintreePurchaseRequest
+	{
+		nonce:string;
+		product_id:string;
+	}
+
 	export interface ResidentJoinedNotification
 	{
 		resident_id:string;
@@ -690,6 +706,10 @@ declare namespace sv
 		stripeCheckout(stripe_token:string, product_id:string, onSuccess?:(reply:ProductPurchasedReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		batchRequestReq(request:BatchRequest, onSuccess?:(reply:BatchRequestReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 		batchRequest(requests:Array<BatchRequestItem>, onSuccess?:(reply:BatchRequestReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getBraintreeClientTokenReq(request:BraintreeClientTokenRequest, onSuccess?:(reply:BraintreeClientTokenReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		getBraintreeClientToken(api_version:number, onSuccess?:(reply:BraintreeClientTokenReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		braintreePurchaseReq(request:BraintreePurchaseRequest, onSuccess?:(reply:ProductPurchasedReply)=>void, onError?:(reply:ErrorReply)=>void):void;
+		braintreePurchase(nonce:string, product_id:string, onSuccess?:(reply:ProductPurchasedReply)=>void, onError?:(reply:ErrorReply)=>void):void;
 
 
     }
